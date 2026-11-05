@@ -165,7 +165,8 @@
 
             .search {
                 cursor: text;
-                min-width: 210px
+                min-width: 150px;
+                width: 170px
             }
 
             .chk {
@@ -524,6 +525,53 @@
                 background: var(--card)
             }
 
+            .zoomInp {
+                width: 62px;
+                text-align: center;
+                font-size: 12px;
+                border: 1px solid var(--line);
+                background: var(--card);
+                border-radius: 12px;
+                padding: 4px 6px
+            }
+            .zoomInp:focus {
+                outline: 2px solid var(--accent);
+                border-color: var(--accent)
+            }
+            #presentBar {
+                position: fixed;
+                bottom: 14px;
+                right: 16px;
+                z-index: 70;
+                display: none;
+                gap: 6px;
+                align-items: center;
+                background: rgba(20,35,52,.88);
+                padding: 6px 8px;
+                border-radius: 10px;
+                box-shadow: 0 3px 12px rgba(0,0,0,.35);
+                opacity: .35;
+                transition: opacity .2s
+            }
+            #presentBar:hover {
+                opacity: 1
+            }
+            #presentBar .btn {
+                background: rgba(255,255,255,.14);
+                color: #fff;
+                border-color: rgba(255,255,255,.4)
+            }
+            #presentBar .zoomInp {
+                background: rgba(255,255,255,.14);
+                color: #fff;
+                border-color: rgba(255,255,255,.4)
+            }
+            body.present header,body.present .toolbar,body.present aside,body.present #minimap {
+                display: none!important
+            }
+            body.present #presentBar {
+                display: flex
+            }
             #minimap {
                 position: absolute;
                 right: 14px;
@@ -572,6 +620,7 @@
                 <button id="mPart" class="on">Participant</button>
                 <button id="mFac">Facilitator</button>
             </div>
+            <button class="iconbtn" id="presentBtn" title="Full-screen presenter view for the workshop">▶ Present</button>
             <button class="iconbtn" id="themeBtn" title="Toggle dark mode">◐ Theme</button>
             <a class="iconbtn hidden" id="improveLink" href="CIS_Improvement_Prioritization_Workspace.html" title="Continue to root causes, countermeasures, prioritization and action planning" style="text-decoration:none">Next: Countermeasures ↗</a>
         </header>
@@ -596,9 +645,10 @@
             <input id="search" class="search" placeholder="Search steps…  (/)">
             <span class="spacer"></span>
             <button class="btn" id="zoomOut">−</button>
-            <span class="pill" id="zoomVal">60%</span>
+            <input class="zoomInp" id="zoomVal" value="60%" title="Type a zoom level (15–200) and press Enter">
             <button class="btn" id="zoomIn">+</button>
-            <button class="btn" id="fit">Fit</button>
+            <button class="btn" id="fitW" title="Fit the full width of the diagram">Fit width</button>
+            <button class="btn" id="fitH" title="Fit the top and bottom of the diagram">Fit height</button>
             <button class="btn" id="mmBtn" title="Toggle mini-map">Mini-map</button>
             <button class="btn" id="panelBtn" title="Show/hide panel (P)">Panel ▸</button>
         </div>
@@ -784,6 +834,14 @@
                     </table>
                 </div>
             </div>
+        </div>
+        <div id="presentBar">
+            <button class="btn sm" id="pZoomOut">−</button>
+            <input class="zoomInp" id="pZoomVal" value="60%">
+            <button class="btn sm" id="pZoomIn">+</button>
+            <button class="btn sm" id="pFitW">Fit width</button>
+            <button class="btn sm" id="pFitH">Fit height</button>
+            <button class="btn sm" id="presentExit">✕ Exit presenter</button>
         </div>
         <div id="toast"></div>
         <script>
@@ -2492,12 +2550,19 @@
               , gEdges = E('g')
               , gSteps = E('g')
               , gBadges = E('g');
-            svg.append(gBg, gEdges, gSteps, gBadges);
+            const gHead = E('g')
+              , gLab = E('g')
+              , gCorner = E('g');
+            svg.append(gBg, gEdges, gSteps, gBadges, gHead, gLab, gCorner);
             const lx = D.phases[0].x
               , rx = Math.max(...D.phases.map(p => p.x + p.w));
             const teamTop = Math.min(...D.teams.map(t => t.y1));
+            const LABEL_W = 26;
             function buildBg() {
                 gBg.innerHTML = '';
+                gHead.innerHTML = '';
+                gLab.innerHTML = '';
+                gCorner.innerHTML = '';
                 const dark = document.body.classList.contains('dark');
                 // team bands
                 D.teams.forEach(t => {
@@ -2511,10 +2576,9 @@
                         stroke: t.color,
                         'stroke-opacity': .5
                     }));
-                }
-                );
-                // phases
-                D.phases.forEach( (p, i) => {
+                });
+                // phase outlines (scroll with the diagram)
+                D.phases.forEach(p => {
                     gBg.append(E('rect', {
                         x: p.x,
                         y: teamTop - HEAD,
@@ -2524,16 +2588,30 @@
                         stroke: dark ? '#4a5a6a' : '#9eabb8',
                         'stroke-width': 1.5
                     }));
-                    const hd = E('rect', {
-                        x: p.x + 1,
+                });
+                // phase headers (frozen at the top while scrolling down)
+                gHead.append(E('rect', {
+                    x: lx,
+                    y: teamTop - HEAD - 2000,
+                    width: rx - lx,
+                    height: 2000,
+                    fill: 'var(--canvas)'
+                }));
+                D.phases.forEach( (p, i) => {
+                    gHead.append(E('rect', {
+                        x: p.x,
                         y: teamTop - HEAD,
-                        width: p.w - 2,
+                        width: p.w,
                         height: HEAD,
-                        fill: i % 2 ? 'var(--phaseHead)' : 'color-mix(in srgb,var(--phaseHead) 88%,#000)'
+                        fill: i % 2 ? 'var(--phaseHead)' : 'color-mix(in srgb,var(--phaseHead) 88%,#000)',
+                        stroke: dark ? '#4a5a6a' : '#9eabb8'
+                    }));
+                    const tg = E('g', {
+                        'data-phase': i
                     });
-                    gBg.append(hd);
-                    gBg.append(E('text', {
-                        x: p.x + 12,
+                    gHead.append(tg);
+                    tg.append(E('text', {
+                        x: p.x + 12 + LABEL_W * (i === 0 ? 1 : 0),
                         y: teamTop - HEAD + 19,
                         fill: 'var(--phaseHeadInk)',
                         'font-size': 11,
@@ -2541,38 +2619,72 @@
                         'font-weight': 600,
                         'letter-spacing': '.08em'
                     }, `PHASE ${i + 1}`));
-                    gBg.append(E('text', {
-                        x: p.x + 12,
+                    tg.append(E('text', {
+                        x: p.x + 12 + LABEL_W * (i === 0 ? 1 : 0),
                         y: teamTop - HEAD + 37,
                         fill: 'var(--phaseHeadInk)',
                         'font-size': 16,
                         'font-weight': 700
                     }, p.name));
-                }
-                );
-                // team labels only once, on the far-left edge of the process
+                });
+                // team names (frozen on the left while scrolling sideways)
                 D.teams.forEach(t => {
-                    const labelWidth = 24;
-                    const g = E('g');
-                    g.append(E('rect', {
-                        x: lx + 1,
+                    gLab.append(E('rect', {
+                        x: lx,
                         y: t.y1,
-                        width: labelWidth,
+                        width: LABEL_W,
+                        height: t.y2 - t.y1,
+                        fill: 'var(--canvas)'
+                    }));
+                    gLab.append(E('rect', {
+                        x: lx,
+                        y: t.y1,
+                        width: LABEL_W,
                         height: t.y2 - t.y1,
                         fill: t.color,
-                        'fill-opacity': dark ? .65 : .85
+                        'fill-opacity': dark ? .75 : .92,
+                        stroke: 'rgba(255,255,255,.35)'
                     }));
-                    const cy = (t.y1 + t.y2) / 2;
-                    g.append(E('text', {
-                        x: lx + 17,
+                    const cx = lx + LABEL_W / 2 + 4
+                      , cy = (t.y1 + t.y2) / 2;
+                    gLab.append(E('text', {
+                        x: cx,
                         y: cy,
                         'text-anchor': 'middle',
-                        'font-size': 11,
+                        'font-size': 11.5,
                         'font-weight': 700,
                         fill: '#fff',
-                        transform: `rotate(-90 ${lx + 17} ${cy})`
+                        transform: `rotate(-90 ${cx} ${cy})`
                     }, t.name));
-                    gBg.append(g);
+                });
+                // corner block where the frozen header and frozen names meet
+                gCorner.append(E('rect', {
+                    x: lx,
+                    y: teamTop - HEAD,
+                    width: LABEL_W,
+                    height: HEAD,
+                    fill: 'color-mix(in srgb,var(--phaseHead) 75%,#000)'
+                }));
+                updateFrozen();
+            }
+            // keep headers and team names in view while the map scrolls
+            function updateFrozen() {
+                const w = $('wrap');
+                if (!w)
+                    return;
+                const fx = Math.max(0, w.scrollLeft / scale - lx);
+                const fy = Math.max(0, w.scrollTop / scale - (teamTop - HEAD));
+                gHead.setAttribute('transform', `translate(0 ${fy})`);
+                gLab.setAttribute('transform', `translate(${fx} 0)`);
+                gCorner.setAttribute('transform', `translate(${fx} ${fy})`);
+                // slide each phase title so it stays readable while its phase is on screen
+                const viewL = w.scrollLeft / scale + LABEL_W;
+                gHead.querySelectorAll('[data-phase]').forEach(tg => {
+                    const p = D.phases[+tg.dataset.phase];
+                    const base = p.x + (+tg.dataset.phase === 0 ? LABEL_W : 0);
+                    const tw = tg.getBBox ? tg.getBBox().width : 120;
+                    const dx = Math.max(0, Math.min(viewL - base, p.x + p.w - base - tw - 24));
+                    tg.setAttribute('transform', `translate(${dx} 0)`);
                 });
             }
             // edges
@@ -2839,7 +2951,8 @@
             function selectStep(id, scroll) {
                 selected = id;
                 showTab('step');
-                openPanel(true);
+                if (!presenting)
+                    openPanel(true);
                 if (scroll)
                     centerOn(byId[id]);
                 $('tab-step').scrollTop = 0;
@@ -3178,29 +3291,86 @@
             }
 
             /* ---------- zoom / pan / minimap ---------- */
-            function setZoom(z, keep) {
+            function showZoom() {
+                const v = Math.round(scale * 100) + '%';
+                [$('zoomVal'), $('pZoomVal')].forEach(i => {
+                    if (document.activeElement !== i)
+                        i.value = v
+                });
+            }
+            // anchor: {x, y} position inside the map viewport that should stay put (e.g. the mouse pointer)
+            function setZoom(z, keep, anchor) {
                 const w = $('wrap');
-                const cx = (w.scrollLeft + w.clientWidth / 2) / scale
-                  , cy = (w.scrollTop + w.clientHeight / 2) / scale;
+                const ax = anchor ? anchor.x : w.clientWidth / 2
+                  , ay = anchor ? anchor.y : w.clientHeight / 2;
+                const cx = (w.scrollLeft + ax) / scale
+                  , cy = (w.scrollTop + ay) / scale;
                 scale = Math.max(.15, Math.min(2, z));
                 ui.zoom = scale;
                 const st = $('stage');
                 st.style.transform = `scale(${scale})`;
                 st.style.width = D.width * scale + 'px';
                 st.style.height = D.height * scale + 'px';
-                $('zoomVal').textContent = Math.round(scale * 100) + '%';
+                showZoom();
                 if (keep !== false) {
-                    w.scrollLeft = cx * scale - w.clientWidth / 2;
-                    w.scrollTop = cy * scale - w.clientHeight / 2
+                    w.scrollLeft = cx * scale - ax;
+                    w.scrollTop = cy * scale - ay
                 }
+                updateFrozen();
                 saveAll();
                 drawMinimap()
             }
-            function fit() {
-                const w = $('wrap');
-                setZoom(Math.min((w.clientWidth - 10) / D.width, (w.clientHeight - 10) / D.height), false);
-                w.scrollTo(0, 0)
+            function zoomFromInput(inp) {
+                const n = parseFloat(String(inp.value).replace('%', ''));
+                if (isNaN(n)) {
+                    showZoom();
+                    return
+                }
+                if (n < 15 || n > 200)
+                    toast('Zoom must be between 15% and 200%');
+                inp.blur();
+                setZoom(n / 100);
+                showZoom();
             }
+            function fitWidth() {
+                const w = $('wrap');
+                setZoom((w.clientWidth - 12) / D.width);
+            }
+            function fitHeight() {
+                // keeps your current horizontal position, fills the view top to bottom
+                const w = $('wrap');
+                const midX = (w.scrollLeft + w.clientWidth / 2) / scale;
+                const sb = w.offsetHeight - w.clientHeight;
+                const top = teamTop - HEAD
+                  , bottom = Math.max(...D.teams.map(t => t.y2)) + 2;
+                setZoom((w.offsetHeight - Math.max(sb, 14) - 2) / (bottom - top), false);
+                w.scrollTop = top * scale;
+                w.scrollLeft = midX * scale - w.clientWidth / 2;
+                updateFrozen();
+                drawMinimap();
+            }
+            function fit() {
+                fitWidth()
+            }
+            /* ---------- presenter mode ---------- */
+            let presenting = false;
+            function setPresent(on) {
+                presenting = on;
+                document.body.classList.toggle('present', on);
+                if (on) {
+                    if (document.documentElement.requestFullscreen && !document.fullscreenElement)
+                        document.documentElement.requestFullscreen().catch( () => {});
+                } else if (document.fullscreenElement && document.exitFullscreen)
+                    document.exitFullscreen().catch( () => {});
+                setTimeout(fitHeight, 250);
+            }
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement && presenting) {
+                    presenting = false;
+                    document.body.classList.remove('present');
+                    setTimeout(fitHeight, 200)
+                }
+            });
             function drawMinimap() {
                 const c = $('minimap');
                 c.classList.toggle('hidden', !ui.minimap);
@@ -3274,13 +3444,20 @@
                 w.addEventListener('wheel', e => {
                     if (e.ctrlKey) {
                         e.preventDefault();
-                        setZoom(scale * (e.deltaY < 0 ? 1.1 : .9))
+                        const r = w.getBoundingClientRect();
+                        setZoom(scale * (e.deltaY < 0 ? 1.1 : .9), true, {
+                            x: e.clientX - r.left,
+                            y: e.clientY - r.top
+                        })
                     }
                 }
                 , {
                     passive: false
                 });
-                w.addEventListener('scroll', () => requestAnimationFrame(drawMinimap));
+                w.addEventListener('scroll', () => {
+                    updateFrozen();
+                    requestAnimationFrame(drawMinimap)
+                });
             }
             )();
 
@@ -3333,7 +3510,29 @@
             $('next').onclick = () => walk(1);
             $('zoomIn').onclick = () => setZoom(scale * 1.2);
             $('zoomOut').onclick = () => setZoom(scale / 1.2);
-            $('fit').onclick = fit;
+            $('fitW').onclick = $('pFitW').onclick = fitWidth;
+            $('fitH').onclick = $('pFitH').onclick = fitHeight;
+            $('presentBtn').onclick = () => setPresent(true);
+            $('presentExit').onclick = () => setPresent(false);
+            $('pZoomIn').onclick = () => setZoom(scale * 1.2);
+            $('pZoomOut').onclick = () => setZoom(scale / 1.2);
+            [$('zoomVal'), $('pZoomVal')].forEach(inp => {
+                inp.addEventListener('focus', () => {
+                    inp.value = Math.round(scale * 100);
+                    inp.select()
+                });
+                inp.addEventListener('keydown', e => {
+                    e.stopPropagation();
+                    if (e.key === 'Enter')
+                        zoomFromInput(inp);
+                    else if (e.key === 'Escape') {
+                        inp.blur();
+                        showZoom()
+                    }
+                });
+                inp.addEventListener('blur', () => setTimeout(showZoom, 0));
+                inp.addEventListener('change', () => zoomFromInput(inp));
+            });
             $('mmBtn').onclick = () => {
                 ui.minimap = !ui.minimap;
                 saveAll();
