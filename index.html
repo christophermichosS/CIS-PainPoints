@@ -701,14 +701,13 @@
                             <div>
                                 <label class="f">Severity (how bad)</label>
                                 <select id="sev" class="inp">
-                                    <option value="1">1 – Minor</option>
-                                    <option value="2">2 – Moderate</option>
-                                    <option value="3" selected>3 – Significant</option>
-                                    <option value="4">4 – High</option>
-                                    <option value="5">5 – Critical</option>
+                                    <option value="1">Small</option>
+                                    <option value="2" selected>Medium</option>
+                                    <option value="3">Large</option>
                                 </select>
                             </div>
                         </div>
+                        <div class="s" id="sevHint" style="font-size:11.5px;color:var(--muted);margin-top:3px"></div>
                         <label class="f">What happens? (impact)</label>
                         <textarea id="desc" class="inp"></textarea>
                         <label class="f">Likely cause (optional)</label>
@@ -863,7 +862,9 @@
             const CATS = ['Bottleneck / wait time', 'Rework', 'Handoff issue', 'Manual effort', 'Data quality', 'Unclear ownership / roles', 'System / tool limitation', 'Documentation / knowledge gap', 'Control / review gap', 'Communication', 'Other'];
             const FAC_EMAIL = 'christopher.michos@statcan.gc.ca';
             const STATUSES = ['New', 'Validated', 'Duplicate', 'Parked', 'Out of scope'];
-            const SEVC = ['#ccc', '#f6d55c', '#f4b350', '#ef8a3c', '#e2553b', '#b71c1c'];
+            const SEVC = ['#ccc', '#f6d55c', '#ef8a3c', '#b71c1c'];
+            const SEVL = ['', 'Small', 'Medium', 'Large'];
+            const SEVHINT = ['', 'A minor annoyance', 'Slows us down noticeably', 'Blocks work, causes major rework or errors, or affects other teams'];
             const $ = id => document.getElementById(id);
             const byId = Object.fromEntries(D.steps.map(s => [s.id, s]));
             const teamOf = Object.fromEntries(D.teams.map(t => [t.name, t]));
@@ -902,6 +903,7 @@
             });
             function migrateItem(i) {
                 delete i.freq;
+                mapSev(i);
                 if (i.stepId == null)
                     return i;
                 let s = byId[i.stepId];
@@ -970,7 +972,17 @@
                 minimap: true
             });
             let selPt = null, selPin = null, editId = null;
-            (function legacy() {
+            function mapSev(i) {
+                if (!i.sevScale) {
+                    const s = +i.severity || 3;
+                    i.severity = s <= 2 ? 1 : (s === 3 ? 2 : 3);
+                    i.sevScale = 3
+                }
+                return i
+            }
+            function legacy() {
+                part.items.forEach(mapSev);
+                fac.items.forEach(mapSev);
                 try {
                     const op = JSON.parse(localStorage.getItem('cisWB_participant_v2') || 'null');
                     if (op && !part.items.length && !part.name && (op.items || []).length) {
@@ -985,8 +997,11 @@
                         fac.contributors = of.contributors || {};
                         fac.facEmail = of.facEmail || fac.facEmail
                     }
+                    part.items.forEach(mapSev);
+                    fac.items.forEach(mapSev);
+                    saveAll()
                 } catch {}
-            })();
+            }
             let selected = null
               , walkIdx = -1
               , trace = null
@@ -1427,7 +1442,7 @@
                     const rel = tm0 === 'all' || i.team === tm0;
                     if (!rel && hide)
                         return;
-                    const tt = .15 + .85 * (maxItem > 0 ? prio(i) / maxItem : (+i.severity || 1) / 5);
+                    const tt = .15 + .85 * (maxItem > 0 ? prio(i) / maxItem : (+i.severity || 1) / 3);
                     const g = E('g', {class: 'pin', style: `cursor:pointer;opacity:${rel ? 1 : .3}`});
                     g.append(E('circle', {cx: i.x, cy: i.y, r: 12, fill: ramp(tt, true), stroke: selPin === i.id ? '#2b6cb0' : '#7a1010', 'stroke-width': selPin === i.id ? 4 : 2, 'stroke-dasharray': '4 2'}));
                     g.append(E('text', {x: i.x, y: i.y + 4.5, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 800, fill: tt > .45 ? '#fff' : '#5a0000'}, '!'));
@@ -1489,12 +1504,16 @@
                 render();
                 $('desc').focus()
             }
+            function showSevHint() {
+                $('sevHint').textContent = SEVHINT[+$('sev').value] || ''
+            }
             function cancelEdit(quiet) {
                 if (editId === null)
                     return;
                 editId = null;
                 ['desc', 'cause', 'idea', 'timeVal', 'times'].forEach(k => $(k).value = '');
-                $('sev').value = 3;
+                $('sev').value = 2;
+                showSevHint();
                 $('formTitle').textContent = 'Add a pain point';
                 $('save').textContent = 'Add pain point';
                 $('cancelEdit').classList.add('hidden')
@@ -1517,6 +1536,7 @@
                 editId = id;
                 $('cat').value = i.category;
                 $('sev').value = i.severity;
+                showSevHint();
                 $('desc').value = i.description || '';
                 $('cause').value = i.cause || '';
                 $('idea').value = i.idea || '';
@@ -1581,7 +1601,7 @@
             function card(i, opts={}) {
                 const s = byId[i.stepId];
                 return `<li style="border-left-color:${SEVC[i.severity]}">
-   <div class="t">${esc(i.category)} · Sev ${i.severity}${i.times !== '' && i.times != null ? ` · ×${i.times}` : ''}${prio(i) ? ` · ${fmtH(prio(i))} lost` : ''}${i.votes ? ` · ▲${i.votes}` : ''}</div>
+   <div class="t">${esc(i.category)} · ${SEVL[i.severity] || ''}${i.times !== '' && i.times != null ? ` · ×${i.times}` : ''}${prio(i) ? ` · ${fmtH(prio(i))} lost` : ''}${i.votes ? ` · ▲${i.votes}` : ''}</div>
    ${opts.showStep && s ? `<div class="s"><a href="#" data-go="${s.id}">${esc(s.label.slice(0, 60))}</a></div>` : ''}
    ${!s && i.x != null ? `<div class="s"><a href="#" data-pin="${i.id}">📍 Map pin</a> · ${esc(i.team || '')} · ${esc(i.phase || '')}</div>` : ''}
    ${!s && i.x == null ? `<div class="s">🌐 Whole process</div>` : ''}
@@ -1695,6 +1715,7 @@
                 const f = {
                     category: $('cat').value,
                     severity: +$('sev').value,
+                    sevScale: 3,
                     description: desc,
                     cause: $('cause').value.trim(),
                     idea: $('idea').value.trim(),
@@ -1719,6 +1740,8 @@
                     editId = null;
                     $('formTitle').textContent = 'Add a pain point';
                     ['desc', 'cause', 'idea', 'timeVal', 'times'].forEach(k => $(k).value = '');
+                    $('sev').value = 2;
+                    showSevHint();
                     saveAll();
                     render();
                     toast('Changes saved');
@@ -1745,7 +1768,8 @@
                     part.items.push(item)
                 }
                 ['desc', 'cause', 'idea', 'timeVal', 'times'].forEach(k => $(k).value = '');
-                $('sev').value = 3;
+                $('sev').value = 2;
+                showSevHint();
                 if (!selected) {
                     selPt = null;
                     selPin = item.id
@@ -1881,7 +1905,7 @@
             }
             const COLS = [['step', 'Step'], ['team', 'Step team'], ['phase', 'Phase'], ['category', 'Category'], ['severity', 'Severity'], ['description', 'Description'], ['cause', 'Likely cause'], ['idea', 'Improvement idea'], ['time', 'Time lost (as entered)'], ['timeHrs', 'Hours lost each time'], ['times', 'Times it happens'], ['score', 'Score (total hours lost)'], ['author', 'Submitted by'], ['authorTeam', 'Submitter team'], ['status', 'Status'], ['votes', 'Votes'], ['created', 'Created']];
             function toCsv(items) {
-                items = items.map(decor);
+                items = items.map(i => Object.assign(decor(i), {severity: SEVL[i.severity] || ''}));
                 return '\ufeff' + [COLS.map(c => c[1]).join(',')].concat(items.map(i => COLS.map( ([k]) => '"' + String(i[k] ?? '').replace(/"/g, '""') + '"').join(','))).join('\r\n')
             }
 
@@ -1901,7 +1925,7 @@
                 }
                 );
                 $('regCount').textContent = rows.length + ' items';
-                $('regBody').innerHTML = rows.map(i => `<tr>${COLS.filter(c => c[0] !== 'created').map( ([k]) => k === 'step' ? (i.stepId ? `<td><a href="#" data-go="${i.stepId}" data-close="1">${esc(i.step)}</a></td>` : i.x != null ? `<td><a href="#" data-pin="${i.id}" data-close="1">📍 Map pin (${esc(i.team)})</a></td>` : `<td>${esc(i.step)}</td>`) : k === 'severity' ? `<td><b style="color:${SEVC[i.severity]}">●</b> ${i.severity}</td>` : `<td>${esc(i[k])}</td>`).join('')}</tr>`).join('');
+                $('regBody').innerHTML = rows.map(i => `<tr>${COLS.filter(c => c[0] !== 'created').map( ([k]) => k === 'step' ? (i.stepId ? `<td><a href="#" data-go="${i.stepId}" data-close="1">${esc(i.step)}</a></td>` : i.x != null ? `<td><a href="#" data-pin="${i.id}" data-close="1">📍 Map pin (${esc(i.team)})</a></td>` : `<td>${esc(i.step)}</td>`) : k === 'severity' ? `<td><b style="color:${SEVC[i.severity]}">●</b> ${SEVL[i.severity] || ''}</td>` : `<td>${esc(i[k])}</td>`).join('')}</tr>`).join('');
             }
 
             /* ---------- panel / tabs / mode / theme ---------- */
@@ -2193,6 +2217,8 @@
             $('mFac').onclick = () => setMode('facilitator');
             $('themeBtn').onclick = () => setTheme(ui.theme === 'dark' ? 'light' : 'dark');
             $('save').onclick = addItem;
+            $('sev').onchange = showSevHint;
+            showSevHint();
             $('cancelEdit').onclick = () => cancelEdit();
             $('genBtn').onclick = () => selectPoint({general: true});
             $('traceBtn').onclick = () => {
@@ -2398,6 +2424,7 @@
             );
 
             /* ---------- init ---------- */
+            legacy();
             setTheme(ui.theme);
             openPanel(ui.panel !== false);
             setMode(ui.mode);
