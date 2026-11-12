@@ -669,6 +669,9 @@
                 <div class="pane" id="tab-step">
                     <div id="noStep" class="empty">
                         Click a step on the map to view details and record pain points.<br>
+                        <b>Click any empty spot</b> on the map to drop a pin for an issue that is not tied to a step.<br>
+                        <br>
+                        <button class="btn sm" id="genBtn">+ Process-wide pain point</button><br>
                         <br>
                         <span style="font-size:12px">Tip: pick a team above and use ◀ ▶ to walk through its steps.</span>
                     </div>
@@ -688,14 +691,15 @@
                             <button class="btn sm" id="traceBtn">Trace upstream/downstream</button>
                             <button class="btn sm" id="clearTrace">Clear trace</button>
                         </div>
-                        <h3>Add a pain point</h3>
+                        <div id="formWrap">
+                        <h3 id="formTitle">Add a pain point</h3>
                         <div class="row">
                             <div>
                                 <label class="f">Category</label>
                                 <select id="cat" class="inp"></select>
                             </div>
                             <div>
-                                <label class="f">Severity</label>
+                                <label class="f">Severity (how bad)</label>
                                 <select id="sev" class="inp">
                                     <option value="1">1 – Minor</option>
                                     <option value="2">2 – Moderate</option>
@@ -705,21 +709,30 @@
                                 </select>
                             </div>
                         </div>
-                        <label class="f">What happens? (impact, how often)</label>
+                        <label class="f">What happens? (impact)</label>
                         <textarea id="desc" class="inp"></textarea>
                         <label class="f">Likely cause (optional)</label>
                         <textarea id="cause" class="inp"></textarea>
                         <label class="f">Improvement idea (optional)</label>
                         <textarea id="idea" class="inp"></textarea>
+                        <label class="f">Time lost each time it happens (optional)</label>
                         <div class="row">
-                            <div>
-                                <label class="f">Est. time lost per cycle (optional)</label>
-                                <input id="time" class="inp" placeholder="e.g. 3 days">
-                            </div>
+                            <input id="timeVal" type="number" min="0" step="any" class="inp" placeholder="e.g. 3">
+                            <select id="timeUnit" class="inp">
+                                <option value="min">minutes</option>
+                                <option value="hr">hours</option>
+                                <option value="day" selected>days</option>
+                            </select>
                         </div>
-                        <button class="btn primary" id="save" style="margin-top:10px;width:100%">Add pain point</button>
+                        <label class="f">How many times does this happen?</label>
+                        <input id="times" type="number" min="0" step="1" class="inp" placeholder="e.g. 4">
+                        <div style="display:flex;gap:6px;margin-top:10px">
+                            <button class="btn primary" id="save" style="flex:1">Add pain point</button>
+                            <button class="btn hidden" id="cancelEdit">Cancel</button>
+                        </div>
+                        </div>
                         <h3>
-                            Pain points on this step <span class="pill" id="sCount">0</span>
+                            Pain points here <span class="pill" id="sCount">0</span>
                         </h3>
                         <ul class="cards" id="sList"></ul>
                     </div>
@@ -790,7 +803,7 @@
                 </div>
                 <!-- INSIGHTS TAB -->
                 <div class="pane hidden" id="tab-insights">
-                    <h3 style="margin-top:0">Hotspots (top steps)</h3>
+                    <h3 style="margin-top:0">Hotspots (by hours lost)</h3>
                     <div id="iSteps"></div>
                     <h3>By team</h3>
                     <div id="iTeams"></div>
@@ -845,1617 +858,7 @@
         </div>
         <div id="toast"></div>
         <script>
-            const D = {
-                "phases": [{
-                    "id": "plucifRomHnsVQfBFCZY-1",
-                    "name": "Pre-CRA Data",
-                    "x": 20.0,
-                    "y": 60.0,
-                    "w": 880.0,
-                    "h": 1080.0
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-30",
-                    "name": "After CRA Data",
-                    "x": 900.0,
-                    "y": 60.0,
-                    "w": 640.0,
-                    "h": 1080.0
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-47",
-                    "name": "APIM Production",
-                    "x": 1540.0,
-                    "y": 60.0,
-                    "w": 520.0,
-                    "h": 1080.0
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-66",
-                    "name": "Prep for Income Processing",
-                    "x": 2060.0,
-                    "y": 60.0,
-                    "w": 520.0,
-                    "h": 1080.0
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-86",
-                    "name": "During Income Processing",
-                    "x": 2580.0,
-                    "y": 60.0,
-                    "w": 190.0,
-                    "h": 1080.0
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-94",
-                    "name": "Income Processing",
-                    "x": 2770.0,
-                    "y": 60.0,
-                    "w": 1380.0,
-                    "h": 1080.0
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-127",
-                    "name": "Imputation Part 1",
-                    "x": 4150.0,
-                    "y": 60.0,
-                    "w": 780.0,
-                    "h": 1080.0
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-143",
-                    "name": "Post Income DVs",
-                    "x": 4930.0,
-                    "y": 60.0,
-                    "w": 540.0,
-                    "h": 1080.0
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-155",
-                    "name": "Weights",
-                    "x": 5470.0,
-                    "y": 60.0,
-                    "w": 340.0,
-                    "h": 1080.0
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-179",
-                    "name": "Imputation Part 2",
-                    "x": 5810.0,
-                    "y": 60.0,
-                    "w": 590.0,
-                    "h": 1080.0
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-194",
-                    "name": "Final Steps",
-                    "x": 6400.0,
-                    "y": 60.0,
-                    "w": 970.0,
-                    "h": 1080.0
-                }],
-                "teams": [{
-                    "name": "CIS Metho",
-                    "y1": 80.0,
-                    "y2": 200.0,
-                    "fill": "#ffe6cc",
-                    "color": "#d79b00"
-                }, {
-                    "name": "CIS SME",
-                    "y1": 200.0,
-                    "y2": 320.0,
-                    "fill": "#dae8fc",
-                    "color": "#6c8ebf"
-                }, {
-                    "name": "SSPE",
-                    "y1": 320.0,
-                    "y2": 570.0,
-                    "fill": "#e1d5e7",
-                    "color": "#9673a6"
-                }, {
-                    "name": "SIPS",
-                    "y1": 570.0,
-                    "y2": 810.0,
-                    "fill": "#d5e8d4",
-                    "color": "#82b366"
-                }, {
-                    "name": "SIPS Metho",
-                    "y1": 810.0,
-                    "y2": 930.0,
-                    "fill": "#b0e3e6",
-                    "color": "#0e8088"
-                }, {
-                    "name": "Other teams",
-                    "y1": 930.0,
-                    "y2": 1140.0,
-                    "fill": "#f8cecc",
-                    "color": "#b85450"
-                }],
-                "steps": [{
-                    "id": "plucifRomHnsVQfBFCZY-3",
-                    "label": "Get ARUIDs from sample coordination file",
-                    "x": 60.0,
-                    "y": 110.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS Metho",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-6",
-                    "label": "Get variables from non-TABS LFS files (geo, rent, resp mode, DOB, relreg)",
-                    "x": 250.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-7",
-                    "label": "CleanUp of CIS variables",
-                    "x": 440.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-10",
-                    "label": "Get and put together CIS data from collection files",
-                    "x": 250.0,
-                    "y": 360.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-12",
-                    "label": "Get TABS for 12-months (i.e. processing population for CISplus and CIS",
-                    "x": 250.0,
-                    "y": 460.0,
-                    "w": 120.0,
-                    "h": 70.0,
-                    "team": "SSPE",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-14",
-                    "label": "Define respondent and sample flags (CISplus, CIS, QS)",
-                    "x": 440.0,
-                    "y": 420.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-16",
-                    "label": "Create PERS & HHLD files",
-                    "x": 590.0,
-                    "y": 420.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-17",
-                    "label": "Extraction to create sample file to send to SIPS",
-                    "x": 740.0,
-                    "y": 420.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-18",
-                    "label": "Recode, Flows and Edits",
-                    "x": 590.0,
-                    "y": 340.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-22",
-                    "label": "GAF (Geo)",
-                    "x": 60.0,
-                    "y": 960.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "Other teams",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-24",
-                    "label": "Extract LFS data for linkage (LFS)",
-                    "x": 450.0,
-                    "y": 1050.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "Other teams",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-25",
-                    "label": "Linkage for LFS data to get SINs (SDLE)",
-                    "x": 650.0,
-                    "y": 1050.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "Other teams",
-                    "phase": "Pre-CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-33",
-                    "label": "DVs for AuxVar (Ex for person: age, valid skips based on age)",
-                    "x": 1260.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "After CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-34",
-                    "label": "DVs for Census family/family type",
-                    "x": 1400.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "After CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-37",
-                    "label": "Add APIM family variables and SDLE linkage status",
-                    "x": 1110.0,
-                    "y": 340.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "After CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-39",
-                    "label": "Create file with APIM family variables for classes 1 and 2",
-                    "x": 970.0,
-                    "y": 600.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS",
-                    "phase": "After CRA Data",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-51",
-                    "label": "Add APIM variables and SDLE linkage status",
-                    "x": 1900.0,
-                    "y": 460.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "APIM Production",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-54",
-                    "label": "Create initial Prelim APIM PREIMP",
-                    "x": 1580.0,
-                    "y": 600.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS",
-                    "phase": "APIM Production",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-56",
-                    "label": "Create APIM pre-class 2 file",
-                    "x": 1740.0,
-                    "y": 600.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS",
-                    "phase": "APIM Production",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-57",
-                    "label": "Create file with APIM variables",
-                    "x": 1900.0,
-                    "y": 710.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS",
-                    "phase": "APIM Production",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-59",
-                    "label": "Impute APIM class 2",
-                    "x": 1740.0,
-                    "y": 840.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS Metho",
-                    "phase": "APIM Production",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-68",
-                    "label": "Imputation of variables for AuxVar",
-                    "x": 2140.0,
-                    "y": 110.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS Metho",
-                    "phase": "Prep for Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-70",
-                    "label": "DVs for AuxVar (person: redo labour incl.)",
-                    "x": 2300.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Prep for Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-72",
-                    "label": "Create AuxVar and send to SIPS",
-                    "x": 2300.0,
-                    "y": 350.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Prep for Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-74",
-                    "label": "Create Preliminary INCPMast by joining AuxVar to PreClass2 APIM",
-                    "x": 2300.0,
-                    "y": 600.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS",
-                    "phase": "Prep for Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-77",
-                    "label": "Review of Preliminary INCPMAST",
-                    "x": 2300.0,
-                    "y": 840.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS Metho",
-                    "phase": "Prep for Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-78",
-                    "label": "\u25cf",
-                    "x": 2450.0,
-                    "y": 860.0,
-                    "w": 20.0,
-                    "h": 20.0,
-                    "team": "SIPS Metho",
-                    "phase": "Prep for Income Processing",
-                    "shape": "ellipse"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-89",
-                    "label": "DVs that don't require income (housing, mortgage, food, insecurity, DSQ)",
-                    "x": 2620.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "During Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-98",
-                    "label": "Add income variables (overwriting the APIM variables)",
-                    "x": 4010.0,
-                    "y": 470.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-100",
-                    "label": "Create INCMAST by joining the AuxVar to APIM records",
-                    "x": 2800.0,
-                    "y": 600.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-102",
-                    "label": "Calculate aggregate income variables at the person and family/household level",
-                    "x": 3850.0,
-                    "y": 690.0,
-                    "w": 120.0,
-                    "h": 70.0,
-                    "team": "SIPS",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-103",
-                    "label": "Create income file to send to survey team",
-                    "x": 4010.0,
-                    "y": 695.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-106",
-                    "label": "Imputation of Class 3,4,5 (and limited re-imputation of Class 2)",
-                    "x": 2800.0,
-                    "y": 840.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS Metho",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-108",
-                    "label": "Phase 1 - Market Income",
-                    "x": 2950.0,
-                    "y": 840.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS Metho",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-110",
-                    "label": "Phase 1b - Support payments and childcare deductions",
-                    "x": 3100.0,
-                    "y": 840.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS Metho",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-112",
-                    "label": "Phase 2 - OAS, GIS & GST/HST credit",
-                    "x": 3250.0,
-                    "y": 840.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS Metho",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-114",
-                    "label": "Phase 3 - Pension splitting",
-                    "x": 3400.0,
-                    "y": 840.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS Metho",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-116",
-                    "label": "Phase CCB - Childcare benefits",
-                    "x": 3550.0,
-                    "y": 840.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS Metho",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-118",
-                    "label": "Phase TAX - Taxable income and income tax",
-                    "x": 3700.0,
-                    "y": 840.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS Metho",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-119",
-                    "label": "DVClass 3 - Credits imputation",
-                    "x": 3850.0,
-                    "y": 840.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SIPS Metho",
-                    "phase": "Income Processing",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-130",
-                    "label": "Imputation MBM variables",
-                    "x": 4180.0,
-                    "y": 110.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS Metho",
-                    "phase": "Imputation Part 1",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-132",
-                    "label": "Imputation Class of Worker",
-                    "x": 4330.0,
-                    "y": 110.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS Metho",
-                    "phase": "Imputation Part 1",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-134",
-                    "label": "Imputation School Attendance",
-                    "x": 4480.0,
-                    "y": 110.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS Metho",
-                    "phase": "Imputation Part 1",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-136",
-                    "label": "Imputation Housing",
-                    "x": 4630.0,
-                    "y": 110.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS Metho",
-                    "phase": "Imputation Part 1",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-137",
-                    "label": "Imputation Utilities",
-                    "x": 4780.0,
-                    "y": 110.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS Metho",
-                    "phase": "Imputation Part 1",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-157",
-                    "label": "Weights and bootstap weights for CISplus, CIS and person subsample (North & South)",
-                    "x": 5500.0,
-                    "y": 120.0,
-                    "w": 120.0,
-                    "h": 70.0,
-                    "team": "CIS Metho",
-                    "phase": "Weights",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-159",
-                    "label": "DVs - LIM and MBM",
-                    "x": 5660.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Weights",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-164",
-                    "label": "Control totals for calibration (DEM & T1FF or APIM)",
-                    "x": 5500.0,
-                    "y": 990.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "Other teams",
-                    "phase": "Weights",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-165",
-                    "label": "Input from prices",
-                    "x": 5660.0,
-                    "y": 990.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "Other teams",
-                    "phase": "Weights",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-173",
-                    "label": "DVs - MIE, rel to MIE, family type, manual correction of family type if needed",
-                    "x": 4960.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Post Income DVs",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-175",
-                    "label": "DVs - Income Agg - aggregation by CF",
-                    "x": 5110.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Post Income DVs",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-177",
-                    "label": "DVs - PostFam - Variables that need MIE, family type, or income, LICO",
-                    "x": 5260.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Post Income DVs",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-182",
-                    "label": "Imputation - Food Security",
-                    "x": 5850.0,
-                    "y": 110.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS Metho",
-                    "phase": "Imputation Part 2",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-183",
-                    "label": "Imputation - North Subsidized Rent",
-                    "x": 6000.0,
-                    "y": 110.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS Metho",
-                    "phase": "Imputation Part 2",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-186",
-                    "label": "DVs - Utilities, shelter costs",
-                    "x": 6100.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Imputation Part 2",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-187",
-                    "label": "DVs - CHNEED",
-                    "x": 6250.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Imputation Part 2",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-196",
-                    "label": "Data Quality Documentation",
-                    "x": 6430.0,
-                    "y": 110.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS Metho",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-199",
-                    "label": "Prepare dissemination tables",
-                    "x": 6430.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-201",
-                    "label": "Certification",
-                    "x": 6590.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-203",
-                    "label": "Prepare Daily and Infographics",
-                    "x": 6740.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-204",
-                    "label": "Dissemination",
-                    "x": 6890.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-205",
-                    "label": "DDT",
-                    "x": 7050.0,
-                    "y": 230.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "CIS SME",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-208",
-                    "label": "Convert",
-                    "x": 6440.0,
-                    "y": 410.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-210",
-                    "label": "FinProc",
-                    "x": 6650.0,
-                    "y": 410.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-212",
-                    "label": "FinProc2",
-                    "x": 6860.0,
-                    "y": 410.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-214",
-                    "label": "Master (CISPlus, CIS, Person)",
-                    "x": 7050.0,
-                    "y": 410.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-216",
-                    "label": "Create Record Layout",
-                    "x": 7220.0,
-                    "y": 410.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "SSPE",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-217",
-                    "label": "PUMF",
-                    "x": 7255.0,
-                    "y": 510.0,
-                    "w": 50.0,
-                    "h": 50.0,
-                    "team": "SSPE",
-                    "phase": "Final Steps",
-                    "shape": "ellipse"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-221",
-                    "label": "Management Review of Daily",
-                    "x": 6740.0,
-                    "y": 1000.0,
-                    "w": 120.0,
-                    "h": 60.0,
-                    "team": "Other teams",
-                    "phase": "Final Steps",
-                    "shape": "rect"
-                }],
-                "edges": [{
-                    "id": "plucifRomHnsVQfBFCZY-5",
-                    "source": "plucifRomHnsVQfBFCZY-6",
-                    "target": "plucifRomHnsVQfBFCZY-7",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-9",
-                    "source": "plucifRomHnsVQfBFCZY-10",
-                    "target": "plucifRomHnsVQfBFCZY-14",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-11",
-                    "source": "plucifRomHnsVQfBFCZY-12",
-                    "target": "plucifRomHnsVQfBFCZY-14",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-13",
-                    "source": "plucifRomHnsVQfBFCZY-14",
-                    "target": "plucifRomHnsVQfBFCZY-16",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "XHY5ZSu91A_KQdXGXaoY-2",
-                    "source": "plucifRomHnsVQfBFCZY-16",
-                    "target": "plucifRomHnsVQfBFCZY-17",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-23",
-                    "source": "plucifRomHnsVQfBFCZY-24",
-                    "target": "plucifRomHnsVQfBFCZY-25",
-                    "pts": [],
-                    "color": "#b85450",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-26",
-                    "source": "plucifRomHnsVQfBFCZY-22",
-                    "target": "plucifRomHnsVQfBFCZY-6",
-                    "pts": [[220.0, 990.0], [220.0, 260.0]],
-                    "color": "#b85450",
-                    "ex": "1",
-                    "ey": "0.5",
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-27",
-                    "source": "plucifRomHnsVQfBFCZY-6",
-                    "target": "plucifRomHnsVQfBFCZY-14",
-                    "pts": [[420.0, 260.0], [420.0, 435.0]],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.25"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-28",
-                    "source": "plucifRomHnsVQfBFCZY-7",
-                    "target": "plucifRomHnsVQfBFCZY-18",
-                    "pts": [[570.0, 260.0], [570.0, 370.0]],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-29",
-                    "source": "plucifRomHnsVQfBFCZY-3",
-                    "target": "plucifRomHnsVQfBFCZY-6",
-                    "pts": [],
-                    "color": "#d79b00",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.5",
-                    "ny": "0"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-35",
-                    "source": "plucifRomHnsVQfBFCZY-33",
-                    "target": "plucifRomHnsVQfBFCZY-34",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-42",
-                    "source": "plucifRomHnsVQfBFCZY-39",
-                    "target": "plucifRomHnsVQfBFCZY-37",
-                    "pts": [],
-                    "color": "#82b366",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.5",
-                    "ny": "1"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-43",
-                    "source": "plucifRomHnsVQfBFCZY-37",
-                    "target": "plucifRomHnsVQfBFCZY-33",
-                    "pts": [[1240.0, 370.0], [1240.0, 260.0]],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-44",
-                    "source": "plucifRomHnsVQfBFCZY-25",
-                    "target": "plucifRomHnsVQfBFCZY-39",
-                    "pts": [],
-                    "color": "#b85450",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.5",
-                    "ny": "1"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-45",
-                    "source": "plucifRomHnsVQfBFCZY-17",
-                    "target": "plucifRomHnsVQfBFCZY-39",
-                    "pts": [[940.0, 450.0], [940.0, 630.0]],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-46",
-                    "source": "plucifRomHnsVQfBFCZY-18",
-                    "target": "plucifRomHnsVQfBFCZY-37",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-53",
-                    "source": "plucifRomHnsVQfBFCZY-54",
-                    "target": "plucifRomHnsVQfBFCZY-56",
-                    "pts": [],
-                    "color": "#82b366",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-55",
-                    "source": "plucifRomHnsVQfBFCZY-56",
-                    "target": "plucifRomHnsVQfBFCZY-57",
-                    "pts": [],
-                    "color": "#82b366",
-                    "ex": "0.5",
-                    "ey": "0.833",
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-61",
-                    "source": "plucifRomHnsVQfBFCZY-54",
-                    "target": "plucifRomHnsVQfBFCZY-59",
-                    "pts": [],
-                    "color": "#82b366",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-62",
-                    "source": "plucifRomHnsVQfBFCZY-59",
-                    "target": "plucifRomHnsVQfBFCZY-57",
-                    "pts": [],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.5",
-                    "ny": "1"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-63",
-                    "source": "plucifRomHnsVQfBFCZY-56",
-                    "target": "plucifRomHnsVQfBFCZY-51",
-                    "pts": [],
-                    "color": "#82b366",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.079",
-                    "ny": "0.501"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-64",
-                    "source": "plucifRomHnsVQfBFCZY-39",
-                    "target": "plucifRomHnsVQfBFCZY-54",
-                    "pts": [],
-                    "color": "#82b366",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-65",
-                    "source": "plucifRomHnsVQfBFCZY-33",
-                    "target": "plucifRomHnsVQfBFCZY-56",
-                    "pts": [[1320.0, 500.0], [1800.0, 500.0]],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.5",
-                    "ny": "0"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-76",
-                    "source": "plucifRomHnsVQfBFCZY-77",
-                    "target": "plucifRomHnsVQfBFCZY-78",
-                    "pts": [],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-80",
-                    "source": "plucifRomHnsVQfBFCZY-72",
-                    "target": "plucifRomHnsVQfBFCZY-74",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-81",
-                    "source": "plucifRomHnsVQfBFCZY-77",
-                    "target": "plucifRomHnsVQfBFCZY-74",
-                    "pts": [],
-                    "color": "#7a8794",
-                    "ex": "0.5",
-                    "ey": "0",
-                    "nx": "0.5",
-                    "ny": "1"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-82",
-                    "source": "plucifRomHnsVQfBFCZY-70",
-                    "target": "plucifRomHnsVQfBFCZY-72",
-                    "pts": [],
-                    "color": "#7a8794",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-83",
-                    "source": "plucifRomHnsVQfBFCZY-68",
-                    "target": "plucifRomHnsVQfBFCZY-70",
-                    "pts": [],
-                    "color": "#d79b00",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-84",
-                    "source": "plucifRomHnsVQfBFCZY-51",
-                    "target": "plucifRomHnsVQfBFCZY-68",
-                    "pts": [[2110.0, 490.0], [2110.0, 155.0]],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.75"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-85",
-                    "source": "plucifRomHnsVQfBFCZY-56",
-                    "target": "plucifRomHnsVQfBFCZY-74",
-                    "pts": [],
-                    "color": "#82b366",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-101",
-                    "source": "plucifRomHnsVQfBFCZY-102",
-                    "target": "plucifRomHnsVQfBFCZY-103",
-                    "pts": [],
-                    "color": "#82b366",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-105",
-                    "source": "plucifRomHnsVQfBFCZY-106",
-                    "target": "plucifRomHnsVQfBFCZY-108",
-                    "pts": [],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-107",
-                    "source": "plucifRomHnsVQfBFCZY-108",
-                    "target": "plucifRomHnsVQfBFCZY-110",
-                    "pts": [],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-109",
-                    "source": "plucifRomHnsVQfBFCZY-110",
-                    "target": "plucifRomHnsVQfBFCZY-112",
-                    "pts": [],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-111",
-                    "source": "plucifRomHnsVQfBFCZY-112",
-                    "target": "plucifRomHnsVQfBFCZY-114",
-                    "pts": [],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-113",
-                    "source": "plucifRomHnsVQfBFCZY-114",
-                    "target": "plucifRomHnsVQfBFCZY-116",
-                    "pts": [],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-115",
-                    "source": "plucifRomHnsVQfBFCZY-116",
-                    "target": "plucifRomHnsVQfBFCZY-118",
-                    "pts": [],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-117",
-                    "source": "plucifRomHnsVQfBFCZY-118",
-                    "target": "plucifRomHnsVQfBFCZY-119",
-                    "pts": [],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-121",
-                    "source": "plucifRomHnsVQfBFCZY-100",
-                    "target": "plucifRomHnsVQfBFCZY-106",
-                    "pts": [],
-                    "color": "#82b366",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-122",
-                    "source": "plucifRomHnsVQfBFCZY-119",
-                    "target": "plucifRomHnsVQfBFCZY-102",
-                    "pts": [],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-123",
-                    "source": "plucifRomHnsVQfBFCZY-103",
-                    "target": "plucifRomHnsVQfBFCZY-98",
-                    "pts": [],
-                    "color": "#82b366",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-124",
-                    "source": "plucifRomHnsVQfBFCZY-72",
-                    "target": "plucifRomHnsVQfBFCZY-100",
-                    "pts": [[2490.0, 380.0], [2490.0, 630.0]],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-125",
-                    "source": "plucifRomHnsVQfBFCZY-57",
-                    "target": "plucifRomHnsVQfBFCZY-100",
-                    "pts": [[2490.0, 740.0], [2490.0, 630.0]],
-                    "color": "#82b366",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-126",
-                    "source": "plucifRomHnsVQfBFCZY-89",
-                    "target": "plucifRomHnsVQfBFCZY-130",
-                    "pts": [[2675.0, 260.0]],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-129",
-                    "source": "plucifRomHnsVQfBFCZY-130",
-                    "target": "plucifRomHnsVQfBFCZY-132",
-                    "pts": [],
-                    "color": "#d79b00",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-131",
-                    "source": "plucifRomHnsVQfBFCZY-132",
-                    "target": "plucifRomHnsVQfBFCZY-134",
-                    "pts": [],
-                    "color": "#d79b00",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-133",
-                    "source": "plucifRomHnsVQfBFCZY-134",
-                    "target": "plucifRomHnsVQfBFCZY-136",
-                    "pts": [],
-                    "color": "#d79b00",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-135",
-                    "source": "plucifRomHnsVQfBFCZY-136",
-                    "target": "plucifRomHnsVQfBFCZY-137",
-                    "pts": [],
-                    "color": "#d79b00",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-150",
-                    "source": "plucifRomHnsVQfBFCZY-34",
-                    "target": "plucifRomHnsVQfBFCZY-68",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-151",
-                    "source": "plucifRomHnsVQfBFCZY-89",
-                    "target": "plucifRomHnsVQfBFCZY-173",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-152",
-                    "source": "plucifRomHnsVQfBFCZY-110",
-                    "target": "plucifRomHnsVQfBFCZY-130",
-                    "pts": [[3160.0, 380.0], [4240.0, 380.0]],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.5",
-                    "ny": "1"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-153",
-                    "source": "plucifRomHnsVQfBFCZY-116",
-                    "target": "plucifRomHnsVQfBFCZY-136",
-                    "pts": [[3610.0, 400.0], [4690.0, 400.0]],
-                    "color": "#0e8088",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.5",
-                    "ny": "1"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-154",
-                    "source": "plucifRomHnsVQfBFCZY-98",
-                    "target": "plucifRomHnsVQfBFCZY-173",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.5",
-                    "ny": "1"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-166",
-                    "source": "plucifRomHnsVQfBFCZY-165",
-                    "target": "plucifRomHnsVQfBFCZY-159",
-                    "pts": [],
-                    "color": "#b85450",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.5",
-                    "ny": "1"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-167",
-                    "source": "plucifRomHnsVQfBFCZY-164",
-                    "target": "plucifRomHnsVQfBFCZY-157",
-                    "pts": [],
-                    "color": "#b85450",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.5",
-                    "ny": "1"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-168",
-                    "source": "plucifRomHnsVQfBFCZY-157",
-                    "target": "plucifRomHnsVQfBFCZY-159",
-                    "pts": [],
-                    "color": "#d6b656",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.25",
-                    "ny": "0"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-169",
-                    "source": "plucifRomHnsVQfBFCZY-177",
-                    "target": "plucifRomHnsVQfBFCZY-159",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": "1",
-                    "ey": "0.5",
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-170",
-                    "source": "plucifRomHnsVQfBFCZY-177",
-                    "target": "plucifRomHnsVQfBFCZY-157",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": "1",
-                    "ey": "0.5",
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-171",
-                    "source": "plucifRomHnsVQfBFCZY-70",
-                    "target": "plucifRomHnsVQfBFCZY-89",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-172",
-                    "source": "plucifRomHnsVQfBFCZY-173",
-                    "target": "plucifRomHnsVQfBFCZY-175",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-174",
-                    "source": "plucifRomHnsVQfBFCZY-175",
-                    "target": "plucifRomHnsVQfBFCZY-177",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.167",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-176",
-                    "source": "plucifRomHnsVQfBFCZY-177",
-                    "target": "plucifRomHnsVQfBFCZY-182",
-                    "pts": [[5320.0, 90.0], [5910.0, 90.0]],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0.5",
-                    "ny": "0"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-178",
-                    "source": "plucifRomHnsVQfBFCZY-137",
-                    "target": "plucifRomHnsVQfBFCZY-159",
-                    "pts": [[5440.0, 140.0], [5440.0, 110.0], [5750.0, 110.0]],
-                    "color": "#d79b00",
-                    "ex": "1",
-                    "ey": "0.5",
-                    "nx": "0.75",
-                    "ny": "0"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-181",
-                    "source": "plucifRomHnsVQfBFCZY-182",
-                    "target": "plucifRomHnsVQfBFCZY-183",
-                    "pts": [],
-                    "color": "#d79b00",
-                    "ex": null,
-                    "ey": null,
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-185",
-                    "source": "plucifRomHnsVQfBFCZY-186",
-                    "target": "plucifRomHnsVQfBFCZY-187",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-192",
-                    "source": "plucifRomHnsVQfBFCZY-183",
-                    "target": "plucifRomHnsVQfBFCZY-186",
-                    "pts": [],
-                    "color": "#d79b00",
-                    "ex": "1",
-                    "ey": "0.5",
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-193",
-                    "source": "plucifRomHnsVQfBFCZY-159",
-                    "target": "plucifRomHnsVQfBFCZY-186",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-198",
-                    "source": "plucifRomHnsVQfBFCZY-199",
-                    "target": "plucifRomHnsVQfBFCZY-201",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-200",
-                    "source": "plucifRomHnsVQfBFCZY-201",
-                    "target": "plucifRomHnsVQfBFCZY-203",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-202",
-                    "source": "plucifRomHnsVQfBFCZY-203",
-                    "target": "plucifRomHnsVQfBFCZY-204",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-207",
-                    "source": "plucifRomHnsVQfBFCZY-208",
-                    "target": "plucifRomHnsVQfBFCZY-210",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-209",
-                    "source": "plucifRomHnsVQfBFCZY-210",
-                    "target": "plucifRomHnsVQfBFCZY-212",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-211",
-                    "source": "plucifRomHnsVQfBFCZY-212",
-                    "target": "plucifRomHnsVQfBFCZY-214",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-213",
-                    "source": "plucifRomHnsVQfBFCZY-214",
-                    "target": "plucifRomHnsVQfBFCZY-216",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-215",
-                    "source": "plucifRomHnsVQfBFCZY-216",
-                    "target": "plucifRomHnsVQfBFCZY-217",
-                    "pts": [],
-                    "color": "#9673a6",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-222",
-                    "source": "plucifRomHnsVQfBFCZY-196",
-                    "target": "plucifRomHnsVQfBFCZY-204",
-                    "pts": [],
-                    "color": "#d79b00",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-223",
-                    "source": "plucifRomHnsVQfBFCZY-205",
-                    "target": "plucifRomHnsVQfBFCZY-214",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-224",
-                    "source": "plucifRomHnsVQfBFCZY-187",
-                    "target": "plucifRomHnsVQfBFCZY-199",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-225",
-                    "source": "plucifRomHnsVQfBFCZY-187",
-                    "target": "plucifRomHnsVQfBFCZY-196",
-                    "pts": [],
-                    "color": "#6c8ebf",
-                    "ex": "0.5",
-                    "ey": "0",
-                    "nx": "0",
-                    "ny": "0.5"
-                }, {
-                    "id": "plucifRomHnsVQfBFCZY-226",
-                    "source": "plucifRomHnsVQfBFCZY-187",
-                    "target": "plucifRomHnsVQfBFCZY-208",
-                    "pts": [[6310.0, 440.0]],
-                    "color": "#6c8ebf",
-                    "ex": null,
-                    "ey": null,
-                    "nx": null,
-                    "ny": null
-                }],
-                "width": 7390.0,
-                "height": 1160.0
-            };
+            const D = {"phases": [{"id": "plucifRomHnsVQfBFCZY-1", "name": "Pre-CRA Data", "x": 20.0, "y": 60.0, "w": 880.0, "h": 1080.0}, {"id": "plucifRomHnsVQfBFCZY-30", "name": "After CRA Data", "x": 900.0, "y": 60.0, "w": 640.0, "h": 1080.0}, {"id": "plucifRomHnsVQfBFCZY-47", "name": "APIM Production (T1FF+)", "x": 1540.0, "y": 60.0, "w": 520.0, "h": 1080.0}, {"id": "plucifRomHnsVQfBFCZY-66", "name": "Prep for Income Processing", "x": 2060.0, "y": 60.0, "w": 520.0, "h": 1080.0}, {"id": "plucifRomHnsVQfBFCZY-86", "name": "During Income Processing", "x": 2580.0, "y": 60.0, "w": 280.0, "h": 1080.0}, {"id": "plucifRomHnsVQfBFCZY-94", "name": "Income Processing", "x": 2860.0, "y": 60.0, "w": 1380.0, "h": 1080.0}, {"id": "plucifRomHnsVQfBFCZY-127", "name": "Imputation Part 1", "x": 4240.0, "y": 60.0, "w": 960.0, "h": 1080.0}, {"id": "plucifRomHnsVQfBFCZY-143", "name": "Post Income DVs", "x": 5200.0, "y": 60.0, "w": 480.0, "h": 1080.0}, {"id": "plucifRomHnsVQfBFCZY-155", "name": "Weights", "x": 5680.0, "y": 60.0, "w": 530.0, "h": 1080.0}, {"id": "plucifRomHnsVQfBFCZY-179", "name": "Imputation Part 2", "x": 6210.0, "y": 60.0, "w": 590.0, "h": 1080.0}, {"id": "plucifRomHnsVQfBFCZY-194", "name": "Final Steps", "x": 6800.0, "y": 60.0, "w": 970.0, "h": 1080.0}], "teams": [{"name": "CIS Metho", "y1": 80.0, "y2": 200.0, "fill": "#ffe6cc", "color": "#d79b00"}, {"name": "CIS SME", "y1": 200.0, "y2": 320.0, "fill": "#dae8fc", "color": "#6c8ebf"}, {"name": "SSPE", "y1": 320.0, "y2": 570.0, "fill": "#e1d5e7", "color": "#9673a6"}, {"name": "SIPS", "y1": 570.0, "y2": 810.0, "fill": "#d5e8d4", "color": "#82b366"}, {"name": "SIPS Metho", "y1": 810.0, "y2": 930.0, "fill": "#b0e3e6", "color": "#0e8088"}, {"name": "Other teams", "y1": 930.0, "y2": 1140.0, "fill": "#f8cecc", "color": "#b85450"}], "steps": [{"id": "plucifRomHnsVQfBFCZY-6", "label": "Get variables from non-TABS LFS files (geo, rent, resp mode, DOB, relreg)", "x": 250.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Pre-CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-7", "label": "CleanUp of CIS variables", "x": 440.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Pre-CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-10", "label": "Get and put together CIS data from collection files", "x": 250.0, "y": 360.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Pre-CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-12", "label": "Get TABS for 12-months (i.e. processing population for CISplus and CIS", "x": 250.0, "y": 460.0, "w": 120.0, "h": 70.0, "team": "SSPE", "phase": "Pre-CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-14", "label": "Define respondent and sample flags (CISplus, CIS, QS)", "x": 440.0, "y": 420.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Pre-CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-16", "label": "Create PERS & HHLD files", "x": 590.0, "y": 420.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Pre-CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-17", "label": "Extraction to create sample file to send to SIPS", "x": 740.0, "y": 420.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Pre-CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-18", "label": "Recode, Flows and Edits", "x": 590.0, "y": 340.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Pre-CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-24", "label": "Extract LFS data for linkage (LFS)", "x": 450.0, "y": 1050.0, "w": 120.0, "h": 60.0, "team": "Other teams", "phase": "Pre-CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-25", "label": "Linkage for LFS data to get SINs (SDLE)", "x": 650.0, "y": 1050.0, "w": 120.0, "h": 60.0, "team": "Other teams", "phase": "Pre-CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-33", "label": "DVs for AuxVar (Ex for person: age, valid skips based on age)", "x": 1260.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "After CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-34", "label": "Dvs for income and Census families", "x": 1400.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "After CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-37", "label": "Add APIM family variables and SDLE linkage status", "x": 1110.0, "y": 340.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "After CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-39", "label": "Create file with APIM family variables for classes 1 and 2", "x": 970.0, "y": 600.0, "w": 120.0, "h": 60.0, "team": "SIPS", "phase": "After CRA Data", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-51", "label": "Add APIM variables and SDLE linkage status", "x": 1900.0, "y": 460.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "APIM Production (T1FF+)", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-54", "label": "Create initial Prelim APIM PREIMP", "x": 1580.0, "y": 600.0, "w": 120.0, "h": 60.0, "team": "SIPS", "phase": "APIM Production (T1FF+)", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-56", "label": "Create APIM pre-class 2 file", "x": 1740.0, "y": 600.0, "w": 120.0, "h": 60.0, "team": "SIPS", "phase": "APIM Production (T1FF+)", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-57", "label": "Create file with APIM variables", "x": 1900.0, "y": 710.0, "w": 120.0, "h": 60.0, "team": "SIPS", "phase": "APIM Production (T1FF+)", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-59", "label": "Impute APIM class 2", "x": 1740.0, "y": 840.0, "w": 120.0, "h": 60.0, "team": "SIPS Metho", "phase": "APIM Production (T1FF+)", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-68", "label": "Imputation of variables for AuxVar (labour imputating)", "x": 2140.0, "y": 110.0, "w": 120.0, "h": 60.0, "team": "CIS Metho", "phase": "Prep for Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-70", "label": "DVs for AuxVar (person: redo labour incl.) & housing outliers", "x": 2300.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Prep for Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-72", "label": "Create AuxVar and send to SIPS", "x": 2300.0, "y": 350.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Prep for Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-74", "label": "Create Preliminary INCPMast by joining AuxVar to PreClass2 APIM", "x": 2300.0, "y": 600.0, "w": 120.0, "h": 60.0, "team": "SIPS", "phase": "Prep for Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-77", "label": "Review of Preliminary INCPMAST", "x": 2300.0, "y": 840.0, "w": 120.0, "h": 60.0, "team": "SIPS Metho", "phase": "Prep for Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-89", "label": "DVs that don't require income (housing, mortgage, food, insecurity, DSQ)", "x": 2665.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "During Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-98", "label": "Add income variables (overwriting the APIM variables)", "x": 4100.0, "y": 470.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-100", "label": "Create INCMAST by joining the AuxVar to APIM records", "x": 2890.0, "y": 600.0, "w": 120.0, "h": 60.0, "team": "SIPS", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-102", "label": "Calculate aggregate income variables at the person and family/household level", "x": 3940.0, "y": 690.0, "w": 120.0, "h": 70.0, "team": "SIPS", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-103", "label": "Create income file to send to survey team", "x": 4100.0, "y": 695.0, "w": 120.0, "h": 60.0, "team": "SIPS", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-106", "label": "Imputation of Class 3,4,5 (and limited re-imputation of Class 2)", "x": 2890.0, "y": 840.0, "w": 120.0, "h": 60.0, "team": "SIPS Metho", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-108", "label": "Phase 1 - Market Income", "x": 3040.0, "y": 840.0, "w": 120.0, "h": 60.0, "team": "SIPS Metho", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-110", "label": "Phase 1b - Support payments and childcare deductions", "x": 3190.0, "y": 840.0, "w": 120.0, "h": 60.0, "team": "SIPS Metho", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-112", "label": "Phase 2 - OAS, GIS & GST/HST credit", "x": 3340.0, "y": 840.0, "w": 120.0, "h": 60.0, "team": "SIPS Metho", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-114", "label": "Phase 3 - Pension splitting", "x": 3490.0, "y": 840.0, "w": 120.0, "h": 60.0, "team": "SIPS Metho", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-116", "label": "Phase CCB - Childcare benefits", "x": 3640.0, "y": 840.0, "w": 120.0, "h": 60.0, "team": "SIPS Metho", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-118", "label": "Phase TAX - Taxable income and income tax", "x": 3790.0, "y": 840.0, "w": 120.0, "h": 60.0, "team": "SIPS Metho", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-119", "label": "DVClass 3 - Credits imputation", "x": 3940.0, "y": 840.0, "w": 120.0, "h": 60.0, "team": "SIPS Metho", "phase": "Income Processing", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-130", "label": "Imputation MBM variables", "x": 4270.0, "y": 110.0, "w": 120.0, "h": 60.0, "team": "CIS Metho", "phase": "Imputation Part 1", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-132", "label": "Imputation Class of Worker", "x": 4420.0, "y": 110.0, "w": 120.0, "h": 60.0, "team": "CIS Metho", "phase": "Imputation Part 1", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-134", "label": "Imputation School Attendance", "x": 4570.0, "y": 110.0, "w": 120.0, "h": 60.0, "team": "CIS Metho", "phase": "Imputation Part 1", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-136", "label": "Imputation Housing", "x": 4720.0, "y": 110.0, "w": 120.0, "h": 60.0, "team": "CIS Metho", "phase": "Imputation Part 1", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-137", "label": "Imputation Utilities", "x": 4870.0, "y": 110.0, "w": 120.0, "h": 60.0, "team": "CIS Metho", "phase": "Imputation Part 1", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-175", "label": "DVs - Income Agg - aggregation by CF", "x": 5380.0, "y": 370.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Post Income DVs", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-157", "label": "Weights and bootstrap weights for CISplus, CIS and person subsample (North & South)", "x": 5810.0, "y": 120.0, "w": 120.0, "h": 70.0, "team": "CIS Metho", "phase": "Weights", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-159", "label": "DVs - LIM and MBM", "x": 6000.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Weights", "shape": "rect"}, {"id": "wXNEIwMzhDzz8qyjSBxG-6", "label": "Review weights for outliers", "x": 5810.0, "y": 210.0, "w": 120.0, "h": 40.0, "team": "CIS SME", "phase": "Weights", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-164", "label": "Control totals for calibration (DEM & T1FF or APIM)", "x": 5710.0, "y": 990.0, "w": 120.0, "h": 60.0, "team": "Other teams", "phase": "Weights", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-165", "label": "Input from prices", "x": 6000.0, "y": 990.0, "w": 120.0, "h": 60.0, "team": "Other teams", "phase": "Weights", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-173", "label": "DVs - MIE, rel to MIE, family type, manual correction of family type if needed", "x": 5230.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Post Income DVs", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-177", "label": "DVs - PostFam - Variables that need MIE, family type, or income, LICO", "x": 5530.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Post Income DVs", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-182", "label": "Imputation - Food Security", "x": 6250.0, "y": 110.0, "w": 120.0, "h": 60.0, "team": "CIS Metho", "phase": "Imputation Part 2", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-186", "label": "DVs - Utilities, shelter costs", "x": 6500.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Imputation Part 2", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-187", "label": "DVs - CHNEED", "x": 6650.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Imputation Part 2", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-196", "label": "Data Quality Documentation", "x": 6830.0, "y": 110.0, "w": 120.0, "h": 60.0, "team": "CIS Metho", "phase": "Final Steps", "shape": "rect"}, {"id": "oPgRKVKGGOGKCq0Sbgk_-11", "label": "PUMF work", "x": 7540.0, "y": 110.0, "w": 120.0, "h": 60.0, "team": "CIS Metho", "phase": "Final Steps", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-199", "label": "Prepare dissemination tables & Update poverty Hub", "x": 6830.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Final Steps", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-201", "label": "Certification", "x": 6990.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Final Steps", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-203", "label": "Prepare Daily and Infographics", "x": 7140.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Final Steps", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-204", "label": "Dissemination", "x": 7290.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Final Steps", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-205", "label": "DDT", "x": 7450.0, "y": 230.0, "w": 120.0, "h": 60.0, "team": "CIS SME", "phase": "Final Steps", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-208", "label": "Convert", "x": 6840.0, "y": 410.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Final Steps", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-210", "label": "FinProc", "x": 7050.0, "y": 410.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Final Steps", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-212", "label": "FinProc2", "x": 7260.0, "y": 410.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Final Steps", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-214", "label": "Master (CISPlus, CIS, Person)", "x": 7450.0, "y": 410.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Final Steps", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-216", "label": "Create Record Layout", "x": 7620.0, "y": 410.0, "w": 120.0, "h": 60.0, "team": "SSPE", "phase": "Final Steps", "shape": "rect"}, {"id": "plucifRomHnsVQfBFCZY-217", "label": "PUMF", "x": 7655.0, "y": 510.0, "w": 50.0, "h": 50.0, "team": "SSPE", "phase": "Final Steps", "shape": "ellipse"}, {"id": "plucifRomHnsVQfBFCZY-221", "label": "Management Review of Daily", "x": 7140.0, "y": 1000.0, "w": 120.0, "h": 60.0, "team": "Other teams", "phase": "Final Steps", "shape": "rect"}, {"id": "wXNEIwMzhDzz8qyjSBxG-1", "label": "Imputation - North Subsidized Rent", "x": 5040.0, "y": 110.0, "w": 120.0, "h": 60.0, "team": "CIS Metho", "phase": "Imputation Part 1", "shape": "rect"}, {"id": "start-dot", "label": "Start", "x": 150.0, "y": 235.0, "w": 50.0, "h": 50.0, "team": "CIS SME", "phase": "Pre-CRA Data", "shape": "ellipse"}], "edges": [{"id": "plucifRomHnsVQfBFCZY-5", "source": "plucifRomHnsVQfBFCZY-6", "target": "plucifRomHnsVQfBFCZY-7", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-9", "source": "plucifRomHnsVQfBFCZY-10", "target": "plucifRomHnsVQfBFCZY-14", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-11", "source": "plucifRomHnsVQfBFCZY-12", "target": "plucifRomHnsVQfBFCZY-14", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-13", "source": "plucifRomHnsVQfBFCZY-14", "target": "plucifRomHnsVQfBFCZY-16", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "XHY5ZSu91A_KQdXGXaoY-2", "source": "plucifRomHnsVQfBFCZY-16", "target": "plucifRomHnsVQfBFCZY-17", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-23", "source": "plucifRomHnsVQfBFCZY-24", "target": "plucifRomHnsVQfBFCZY-25", "pts": [], "color": "#b85450", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-27", "source": "plucifRomHnsVQfBFCZY-6", "target": "plucifRomHnsVQfBFCZY-14", "pts": [[420.0, 260.0], [420.0, 435.0]], "color": "#6c8ebf", "ex": null, "ey": null, "nx": "0", "ny": "0.25"}, {"id": "plucifRomHnsVQfBFCZY-28", "source": "plucifRomHnsVQfBFCZY-7", "target": "plucifRomHnsVQfBFCZY-18", "pts": [[570.0, 260.0], [570.0, 370.0]], "color": "#6c8ebf", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-35", "source": "plucifRomHnsVQfBFCZY-33", "target": "plucifRomHnsVQfBFCZY-34", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-42", "source": "plucifRomHnsVQfBFCZY-39", "target": "plucifRomHnsVQfBFCZY-37", "pts": [], "color": "#82b366", "ex": null, "ey": null, "nx": "0.5", "ny": "1"}, {"id": "plucifRomHnsVQfBFCZY-43", "source": "plucifRomHnsVQfBFCZY-37", "target": "plucifRomHnsVQfBFCZY-33", "pts": [[1240.0, 370.0], [1240.0, 260.0]], "color": "#9673a6", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-44", "source": "plucifRomHnsVQfBFCZY-25", "target": "plucifRomHnsVQfBFCZY-39", "pts": [], "color": "#b85450", "ex": null, "ey": null, "nx": "0.5", "ny": "1"}, {"id": "plucifRomHnsVQfBFCZY-45", "source": "plucifRomHnsVQfBFCZY-17", "target": "plucifRomHnsVQfBFCZY-39", "pts": [[940.0, 450.0], [940.0, 630.0]], "color": "#9673a6", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-46", "source": "plucifRomHnsVQfBFCZY-18", "target": "plucifRomHnsVQfBFCZY-37", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-53", "source": "plucifRomHnsVQfBFCZY-54", "target": "plucifRomHnsVQfBFCZY-56", "pts": [], "color": "#82b366", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-55", "source": "plucifRomHnsVQfBFCZY-56", "target": "plucifRomHnsVQfBFCZY-57", "pts": [], "color": "#82b366", "ex": "0.5", "ey": "0.833", "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-61", "source": "plucifRomHnsVQfBFCZY-54", "target": "plucifRomHnsVQfBFCZY-59", "pts": [], "color": "#82b366", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-62", "source": "plucifRomHnsVQfBFCZY-59", "target": "plucifRomHnsVQfBFCZY-57", "pts": [], "color": "#0e8088", "ex": null, "ey": null, "nx": "0.5", "ny": "1"}, {"id": "plucifRomHnsVQfBFCZY-63", "source": "plucifRomHnsVQfBFCZY-56", "target": "plucifRomHnsVQfBFCZY-51", "pts": [], "color": "#82b366", "ex": "1", "ey": "0.5", "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-64", "source": "plucifRomHnsVQfBFCZY-39", "target": "plucifRomHnsVQfBFCZY-54", "pts": [], "color": "#82b366", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-65", "source": "plucifRomHnsVQfBFCZY-33", "target": "plucifRomHnsVQfBFCZY-56", "pts": [[1320.0, 500.0], [1800.0, 500.0]], "color": "#6c8ebf", "ex": null, "ey": null, "nx": "0.5", "ny": "0"}, {"id": "plucifRomHnsVQfBFCZY-80", "source": "plucifRomHnsVQfBFCZY-72", "target": "plucifRomHnsVQfBFCZY-74", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-81", "source": "plucifRomHnsVQfBFCZY-77", "target": "plucifRomHnsVQfBFCZY-74", "pts": [], "color": "#7a8794", "ex": "0.5", "ey": "0", "nx": "0.5", "ny": "1"}, {"id": "plucifRomHnsVQfBFCZY-82", "source": "plucifRomHnsVQfBFCZY-70", "target": "plucifRomHnsVQfBFCZY-72", "pts": [], "color": "#7a8794", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-83", "source": "plucifRomHnsVQfBFCZY-68", "target": "plucifRomHnsVQfBFCZY-70", "pts": [], "color": "#d79b00", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-84", "source": "plucifRomHnsVQfBFCZY-51", "target": "plucifRomHnsVQfBFCZY-68", "pts": [[2110.0, 490.0], [2110.0, 155.0]], "color": "#9673a6", "ex": null, "ey": null, "nx": "0", "ny": "0.75"}, {"id": "plucifRomHnsVQfBFCZY-85", "source": "plucifRomHnsVQfBFCZY-56", "target": "plucifRomHnsVQfBFCZY-74", "pts": [], "color": "#82b366", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-101", "source": "plucifRomHnsVQfBFCZY-102", "target": "plucifRomHnsVQfBFCZY-103", "pts": [], "color": "#82b366", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-105", "source": "plucifRomHnsVQfBFCZY-106", "target": "plucifRomHnsVQfBFCZY-108", "pts": [], "color": "#0e8088", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-107", "source": "plucifRomHnsVQfBFCZY-108", "target": "plucifRomHnsVQfBFCZY-110", "pts": [], "color": "#0e8088", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-109", "source": "plucifRomHnsVQfBFCZY-110", "target": "plucifRomHnsVQfBFCZY-112", "pts": [], "color": "#0e8088", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-111", "source": "plucifRomHnsVQfBFCZY-112", "target": "plucifRomHnsVQfBFCZY-114", "pts": [], "color": "#0e8088", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-113", "source": "plucifRomHnsVQfBFCZY-114", "target": "plucifRomHnsVQfBFCZY-116", "pts": [], "color": "#0e8088", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-115", "source": "plucifRomHnsVQfBFCZY-116", "target": "plucifRomHnsVQfBFCZY-118", "pts": [], "color": "#0e8088", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-117", "source": "plucifRomHnsVQfBFCZY-118", "target": "plucifRomHnsVQfBFCZY-119", "pts": [], "color": "#0e8088", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-121", "source": "plucifRomHnsVQfBFCZY-100", "target": "plucifRomHnsVQfBFCZY-106", "pts": [], "color": "#82b366", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-122", "source": "plucifRomHnsVQfBFCZY-119", "target": "plucifRomHnsVQfBFCZY-102", "pts": [], "color": "#0e8088", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-123", "source": "plucifRomHnsVQfBFCZY-103", "target": "plucifRomHnsVQfBFCZY-98", "pts": [], "color": "#82b366", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-124", "source": "plucifRomHnsVQfBFCZY-72", "target": "plucifRomHnsVQfBFCZY-100", "pts": [[2490.0, 380.0], [2490.0, 630.0]], "color": "#9673a6", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-125", "source": "plucifRomHnsVQfBFCZY-57", "target": "plucifRomHnsVQfBFCZY-100", "pts": [[2490.0, 740.0], [2490.0, 630.0]], "color": "#82b366", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-126", "source": "plucifRomHnsVQfBFCZY-89", "target": "plucifRomHnsVQfBFCZY-130", "pts": [[2720.0, 260.0]], "color": "#6c8ebf", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-129", "source": "plucifRomHnsVQfBFCZY-130", "target": "plucifRomHnsVQfBFCZY-132", "pts": [], "color": "#d79b00", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-131", "source": "plucifRomHnsVQfBFCZY-132", "target": "plucifRomHnsVQfBFCZY-134", "pts": [], "color": "#d79b00", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-133", "source": "plucifRomHnsVQfBFCZY-134", "target": "plucifRomHnsVQfBFCZY-136", "pts": [], "color": "#d79b00", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-135", "source": "plucifRomHnsVQfBFCZY-136", "target": "plucifRomHnsVQfBFCZY-137", "pts": [], "color": "#d79b00", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-150", "source": "plucifRomHnsVQfBFCZY-34", "target": "plucifRomHnsVQfBFCZY-68", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-151", "source": "plucifRomHnsVQfBFCZY-89", "target": "plucifRomHnsVQfBFCZY-173", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-152", "source": "plucifRomHnsVQfBFCZY-110", "target": "plucifRomHnsVQfBFCZY-130", "pts": [[3250.0, 380.0], [4330.0, 380.0]], "color": "#0e8088", "ex": null, "ey": null, "nx": "0.5", "ny": "1"}, {"id": "plucifRomHnsVQfBFCZY-153", "source": "plucifRomHnsVQfBFCZY-116", "target": "plucifRomHnsVQfBFCZY-136", "pts": [[3700.0, 400.0], [4780.0, 400.0]], "color": "#0e8088", "ex": null, "ey": null, "nx": "0.5", "ny": "1"}, {"id": "plucifRomHnsVQfBFCZY-154", "source": "plucifRomHnsVQfBFCZY-98", "target": "plucifRomHnsVQfBFCZY-173", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": "0.5", "ny": "1"}, {"id": "plucifRomHnsVQfBFCZY-166", "source": "plucifRomHnsVQfBFCZY-165", "target": "plucifRomHnsVQfBFCZY-159", "pts": [], "color": "#b85450", "ex": null, "ey": null, "nx": "0.5", "ny": "1"}, {"id": "plucifRomHnsVQfBFCZY-167", "source": "plucifRomHnsVQfBFCZY-164", "target": "plucifRomHnsVQfBFCZY-157", "pts": [], "color": "#b85450", "ex": "0.5", "ey": "0", "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-168", "source": "plucifRomHnsVQfBFCZY-157", "target": "plucifRomHnsVQfBFCZY-159", "pts": [], "color": "#d6b656", "ex": null, "ey": null, "nx": "0.25", "ny": "0"}, {"id": "wXNEIwMzhDzz8qyjSBxG-7", "source": "plucifRomHnsVQfBFCZY-157", "target": "wXNEIwMzhDzz8qyjSBxG-6", "pts": [], "color": "#d79b00", "ex": "0.25", "ey": "1", "nx": "0.25", "ny": "0"}, {"id": "wXNEIwMzhDzz8qyjSBxG-8", "source": "wXNEIwMzhDzz8qyjSBxG-6", "target": "plucifRomHnsVQfBFCZY-157", "pts": [], "color": "#6c8ebf", "ex": "0.75", "ey": "0", "nx": "0.75", "ny": "1"}, {"id": "plucifRomHnsVQfBFCZY-169", "source": "plucifRomHnsVQfBFCZY-177", "target": "plucifRomHnsVQfBFCZY-159", "pts": [], "color": "#6c8ebf", "ex": "1", "ey": "0.5", "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-170", "source": "plucifRomHnsVQfBFCZY-177", "target": "plucifRomHnsVQfBFCZY-157", "pts": [], "color": "#6c8ebf", "ex": "1", "ey": "0.5", "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-171", "source": "plucifRomHnsVQfBFCZY-70", "target": "plucifRomHnsVQfBFCZY-89", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-172", "source": "plucifRomHnsVQfBFCZY-173", "target": "plucifRomHnsVQfBFCZY-175", "pts": [[5360.0, 260.0], [5360.0, 400.0]], "color": "#6c8ebf", "ex": null, "ey": null, "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-174", "source": "plucifRomHnsVQfBFCZY-175", "target": "plucifRomHnsVQfBFCZY-177", "pts": [[5510.0, 400.0], [5510.0, 260.0]], "color": "#6c8ebf", "ex": null, "ey": null, "nx": "0.167", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-176", "source": "plucifRomHnsVQfBFCZY-177", "target": "plucifRomHnsVQfBFCZY-182", "pts": [[5590.0, 90.0], [6310.0, 90.0]], "color": "#6c8ebf", "ex": null, "ey": null, "nx": "0.5", "ny": "0"}, {"id": "plucifRomHnsVQfBFCZY-178", "source": "wXNEIwMzhDzz8qyjSBxG-1", "target": "plucifRomHnsVQfBFCZY-159", "pts": [[5070.0, 140.0], [5530.0, 140.0], [5530.0, 110.0], [5990.0, 110.0]], "color": "#d79b00", "ex": "1", "ey": "0.5", "nx": "0.5", "ny": "0"}, {"id": "plucifRomHnsVQfBFCZY-185", "source": "plucifRomHnsVQfBFCZY-186", "target": "plucifRomHnsVQfBFCZY-187", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-181", "source": "plucifRomHnsVQfBFCZY-182", "target": "plucifRomHnsVQfBFCZY-186", "pts": [], "color": "#d79b00", "ex": null, "ey": null, "nx": "0.508", "ny": "0.133"}, {"id": "plucifRomHnsVQfBFCZY-193", "source": "plucifRomHnsVQfBFCZY-159", "target": "plucifRomHnsVQfBFCZY-186", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-198", "source": "plucifRomHnsVQfBFCZY-199", "target": "plucifRomHnsVQfBFCZY-201", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-200", "source": "plucifRomHnsVQfBFCZY-201", "target": "plucifRomHnsVQfBFCZY-203", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-202", "source": "plucifRomHnsVQfBFCZY-203", "target": "plucifRomHnsVQfBFCZY-204", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-207", "source": "plucifRomHnsVQfBFCZY-208", "target": "plucifRomHnsVQfBFCZY-210", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-209", "source": "plucifRomHnsVQfBFCZY-210", "target": "plucifRomHnsVQfBFCZY-212", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-211", "source": "plucifRomHnsVQfBFCZY-212", "target": "plucifRomHnsVQfBFCZY-214", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-213", "source": "plucifRomHnsVQfBFCZY-214", "target": "plucifRomHnsVQfBFCZY-216", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-215", "source": "plucifRomHnsVQfBFCZY-216", "target": "plucifRomHnsVQfBFCZY-217", "pts": [], "color": "#9673a6", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-222", "source": "plucifRomHnsVQfBFCZY-196", "target": "plucifRomHnsVQfBFCZY-204", "pts": [], "color": "#d79b00", "ex": "1", "ey": "0.5", "nx": "0.5", "ny": "0"}, {"id": "plucifRomHnsVQfBFCZY-223", "source": "plucifRomHnsVQfBFCZY-205", "target": "plucifRomHnsVQfBFCZY-214", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-224", "source": "plucifRomHnsVQfBFCZY-187", "target": "plucifRomHnsVQfBFCZY-199", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "plucifRomHnsVQfBFCZY-225", "source": "plucifRomHnsVQfBFCZY-187", "target": "plucifRomHnsVQfBFCZY-196", "pts": [], "color": "#6c8ebf", "ex": "0.5", "ey": "0", "nx": "0", "ny": "0.5"}, {"id": "plucifRomHnsVQfBFCZY-226", "source": "plucifRomHnsVQfBFCZY-187", "target": "plucifRomHnsVQfBFCZY-208", "pts": [[6710.0, 440.0]], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "oPgRKVKGGOGKCq0Sbgk_-5", "source": "plucifRomHnsVQfBFCZY-159", "target": "plucifRomHnsVQfBFCZY-199", "pts": [[6170.0, 260.0], [6170.0, 310.0], [6890.0, 310.0]], "color": "#6c8ebf", "ex": "1", "ey": "0.5", "nx": "0.5", "ny": "1"}, {"id": "wXNEIwMzhDzz8qyjSBxG-2", "source": "plucifRomHnsVQfBFCZY-137", "target": "wXNEIwMzhDzz8qyjSBxG-1", "pts": [], "color": "#d79b00", "ex": null, "ey": null, "nx": null, "ny": null}, {"id": "start-edge", "source": "start-dot", "target": "plucifRomHnsVQfBFCZY-6", "pts": [], "color": "#6c8ebf", "ex": null, "ey": null, "nx": null, "ny": null}], "width": 7790.0, "height": 1160.0};
             const NS = 'http://www.w3.org/2000/svg';
             const CATS = ['Bottleneck / wait time', 'Rework', 'Handoff issue', 'Manual effort', 'Data quality', 'Unclear ownership / roles', 'System / tool limitation', 'Documentation / knowledge gap', 'Control / review gap', 'Communication', 'Other'];
             const FAC_EMAIL = 'christopher.michos@statcan.gc.ca';
@@ -2464,6 +867,74 @@
             const $ = id => document.getElementById(id);
             const byId = Object.fromEntries(D.steps.map(s => [s.id, s]));
             const teamOf = Object.fromEntries(D.teams.map(t => [t.name, t]));
+            const WORKDAY = 7.5;
+            const UL = {min: 'min', hr: 'hr', day: 'day'};
+            const toHrs = (v, u) => v === '' || isNaN(v) ? '' : Math.round((u === 'min' ? v / 60 : u === 'day' ? v * WORKDAY : v) * 100) / 100;
+            const prio = i => Math.round((+i.timeHrs || 0) * (i.times === '' || i.times == null ? 1 : +i.times) * 100) / 100;
+            const fmtH = h => (Math.round(h * 10) / 10) + ' hr';
+            function ramp(t, dark) {
+                t = Math.max(0, Math.min(1, t));
+                const a = [255, 232, 226]
+                  , b = dark ? [127, 0, 0] : [214, 70, 60];
+                return 'rgb(' + a.map((x, k) => Math.round(x + (b[k] - x) * t)).join(',') + ')'
+            }
+            function stepStats() {
+                const o = {};
+                visibleItems().forEach(i => {
+                    if (!i.stepId)
+                        return;
+                    const r = o[i.stepId] || (o[i.stepId] = {n: 0, score: 0, sev: 0});
+                    r.n++;
+                    r.score += prio(i);
+                    r.sev += +i.severity || 0
+                });
+                return o
+            }
+            const shadeOf = (r, maxS, maxV) => maxS > 0 ? r.score / maxS : (maxV > 0 ? r.sev / maxV : 0);
+            function locOf(x, y) {
+                const tm = D.teams.find(q => y >= q.y1 && y < q.y2)
+                  , ph = D.phases.find(q => x >= q.x && x < q.x + q.w);
+                return {team: tm ? tm.name : '', phase: ph ? ph.name : ''}
+            }
+            const decor = i => Object.assign({}, i, {
+                score: prio(i),
+                step: i.stepId ? i.step : (i.x != null ? 'Map pin' : 'Whole process')
+            });
+            function migrateItem(i) {
+                delete i.freq;
+                if (i.stepId == null)
+                    return i;
+                let s = byId[i.stepId];
+                if (!s)
+                    s = D.steps.find(q => q.label === i.step);
+                if (!s)
+                    return null;
+                i.stepId = s.id;
+                i.step = s.label;
+                i.team = s.team;
+                i.phase = s.phase;
+                return i
+            }
+            function roundPath(d, r) {
+                let P = d.replace(/^\s*M/, '').split('L').map(s => s.trim().split(',').map(Number));
+                P = P.filter((p, k) => k === 0 || p[0] !== P[k - 1][0] || p[1] !== P[k - 1][1]);
+                P = P.filter((p, k) => k === 0 || k === P.length - 1 || !((P[k - 1][0] === p[0] && p[0] === P[k + 1][0]) || (P[k - 1][1] === p[1] && p[1] === P[k + 1][1])));
+                if (P.length < 3)
+                    return 'M' + P.map(p => p.join(',')).join(' L');
+                let o = 'M' + P[0].join(',');
+                for (let k = 1; k < P.length - 1; k++) {
+                    const p0 = P[k - 1]
+                      , p = P[k]
+                      , p1 = P[k + 1];
+                    const l0 = Math.hypot(p0[0] - p[0], p0[1] - p[1])
+                      , l1 = Math.hypot(p1[0] - p[0], p1[1] - p[1]);
+                    const rr = Math.min(r, l0 / 2, l1 / 2);
+                    const A = [p[0] + (p0[0] - p[0]) / l0 * rr, p[1] + (p0[1] - p[1]) / l0 * rr]
+                      , B = [p[0] + (p1[0] - p[0]) / l1 * rr, p[1] + (p1[1] - p[1]) / l1 * rr];
+                    o += ` L${A.join(',')} Q${p.join(',')} ${B.join(',')}`
+                }
+                return o + ' L' + P[P.length - 1].join(',')
+            }
             const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
             const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({
                 '&': '&amp;',
@@ -2474,10 +945,11 @@
             }[c]));
 
             /* ---------- state ---------- */
+            const MAP_VERSION = '2026-11-12';
             const LS = {
-                part: 'cisWB_participant_v2',
-                fac: 'cisWB_facilitator_v2',
-                ui: 'cisWB_ui_v2'
+                part: 'cisWB_participant_v3',
+                fac: 'cisWB_facilitator_v3',
+                ui: 'cisWB_ui_v3'
             };
             let part = load(LS.part, {
                 name: '',
@@ -2497,6 +969,24 @@
                 zoom: 0.6,
                 minimap: true
             });
+            let selPt = null, selPin = null, editId = null;
+            (function legacy() {
+                try {
+                    const op = JSON.parse(localStorage.getItem('cisWB_participant_v2') || 'null');
+                    if (op && !part.items.length && !part.name && (op.items || []).length) {
+                        part.name = op.name || '';
+                        part.team = op.team || '';
+                        part.notes = op.notes || '';
+                        part.items = op.items.map(migrateItem).filter(Boolean)
+                    }
+                    const of = JSON.parse(localStorage.getItem('cisWB_facilitator_v2') || 'null');
+                    if (of && !fac.items.length && (of.items || []).length) {
+                        fac.items = of.items.map(migrateItem).filter(Boolean);
+                        fac.contributors = of.contributors || {};
+                        fac.facEmail = of.facEmail || fac.facEmail
+                    }
+                } catch {}
+            })();
             let selected = null
               , walkIdx = -1
               , trace = null
@@ -2741,6 +1231,7 @@
                         d = `M${a} L${a[0]},${b[1]} L${b}`
                     }
                 }
+                d = roundPath(d, 16);
                 const col = ed.color && ed.color !== 'none' ? ed.color : '#6d7b89';
                 const mid = 'm' + edgeEls.length;
                 const mk = E('marker', {
@@ -2873,6 +1364,10 @@
                   , heat = $('heat').checked;
                 const q = $('search').value.trim().toLowerCase();
                 const c = counts();
+                const ST = stepStats();
+                const maxScore = Math.max(0, ...Object.values(ST).map(r => r.score));
+                const maxSevS = Math.max(0, ...Object.values(ST).map(r => r.sev));
+                const dk = document.body.classList.contains('dark');
                 D.steps.forEach(s => {
                     const {g, box} = stepEls[s.id];
                     const inTeam = team === 'all' || s.team === team;
@@ -2885,7 +1380,7 @@
                         op = Math.min(op, .12);
                     g.style.opacity = op;
                     g.style.pointerEvents = op === 0 ? 'none' : 'auto';
-                    box.setAttribute('fill', heat && c[s.id] ? SEVC[maxSev(s.id)] : 'var(--step)');
+                    box.setAttribute('fill', heat && ST[s.id] ? ramp(.12 + .78 * shadeOf(ST[s.id], maxScore, maxSevS), dk) : 'var(--step)');
                     box.setAttribute('stroke-width', selected === s.id ? 4.5 : (q && match ? 3.5 : 1.8));
                     box.setAttribute('stroke', selected === s.id ? 'var(--accent)' : teamOf[s.team].color);
                 }
@@ -2912,35 +1407,42 @@
                     const op = stepEls[id].g.style.opacity;
                     if (op === '0')
                         return;
+                    const r0 = ST[id] || {score: 0, sev: 0};
+                    const tt = .15 + .85 * shadeOf(r0, maxScore, maxSevS);
                     const cx = s.x + s.w - 2
                       , cy = s.y + 2
                       , r = n > 9 ? 12 : 10.5;
-                    const g = E('g', {
-                        style: `cursor:pointer;opacity:${Math.max(+op, .35)}`
-                    });
-                    g.append(E('circle', {
-                        cx,
-                        cy,
-                        r,
-                        fill: '#d32f2f',
-                        stroke: '#fff',
-                        'stroke-width': 2
-                    }));
-                    g.append(E('text', {
-                        x: cx,
-                        y: cy + 4,
-                        'text-anchor': 'middle',
-                        'font-size': 11.5,
-                        'font-weight': 700,
-                        fill: '#fff'
-                    }, n));
-                    g.append(E('title', {}, `${n} pain point${n > 1 ? 's' : ''}`));
+                    const g = E('g', {class: 'badge', style: `cursor:pointer;opacity:${Math.max(+op, .35)}`});
+                    g.append(E('circle', {cx, cy, r, fill: ramp(tt, true), stroke: '#7a1010', 'stroke-width': 1.6}));
+                    g.append(E('text', {x: cx, y: cy + 4, 'text-anchor': 'middle', 'font-size': 11.5, 'font-weight': 700, fill: tt > .45 ? '#fff' : '#5a0000'}, n));
+                    g.append(E('title', {}, `${n} pain point${n > 1 ? 's' : ''}` + (r0.score ? ` · ${fmtH(r0.score)} lost` : '')));
                     g.addEventListener('click', () => selectStep(id));
                     gBadges.append(g);
                 }
                 );
+                const tm0 = $('team').value;
+                const vis0 = visibleItems();
+                const maxItem = Math.max(0, ...vis0.map(prio));
+                vis0.filter(i => !i.stepId && i.x != null).forEach(i => {
+                    const rel = tm0 === 'all' || i.team === tm0;
+                    if (!rel && hide)
+                        return;
+                    const tt = .15 + .85 * (maxItem > 0 ? prio(i) / maxItem : (+i.severity || 1) / 5);
+                    const g = E('g', {class: 'pin', style: `cursor:pointer;opacity:${rel ? 1 : .3}`});
+                    g.append(E('circle', {cx: i.x, cy: i.y, r: 12, fill: ramp(tt, true), stroke: selPin === i.id ? '#2b6cb0' : '#7a1010', 'stroke-width': selPin === i.id ? 4 : 2, 'stroke-dasharray': '4 2'}));
+                    g.append(E('text', {x: i.x, y: i.y + 4.5, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 800, fill: tt > .45 ? '#fff' : '#5a0000'}, '!'));
+                    g.append(E('title', {}, `${i.category}` + (prio(i) ? ` · ${fmtH(prio(i))} lost` : '') + `\n${i.description}`));
+                    g.addEventListener('click', ev => {
+                        ev.stopPropagation();
+                        selectPin(i.id)
+                    });
+                    gBadges.append(g)
+                });
+                if (selPt && selPt.x != null)
+                    gBadges.append(E('circle', {cx: selPt.x, cy: selPt.y, r: 12, fill: 'none', stroke: '#2b6cb0', 'stroke-width': 3, 'stroke-dasharray': '3 3'}));
                 const all = visibleItems();
-                $('hstats').textContent = `${D.steps.length} steps · ${all.length} pain points` + (isFac() ? ` · ${Object.keys(fac.contributors).length} contributors` : '');
+                const totH = all.reduce((q, i) => q + prio(i), 0);
+                $('hstats').textContent = `${D.steps.length - 1} steps · ${all.length} pain points` + (totH ? ` · ${fmtH(totH)} lost` : '') + (isFac() ? ` · ${Object.keys(fac.contributors).length} contributors` : '');
                 renderStepPane();
                 renderBook();
                 renderInsights();
@@ -2950,6 +1452,9 @@
             /* ---------- selection & walk ---------- */
             function selectStep(id, scroll) {
                 selected = id;
+                selPt = null;
+                selPin = null;
+                cancelEdit(true);
                 showTab('step');
                 if (!presenting)
                     openPanel(true);
@@ -2957,6 +1462,73 @@
                     centerOn(byId[id]);
                 $('tab-step').scrollTop = 0;
                 render();
+            }
+            function selectPin(id) {
+                const i = [...part.items, ...fac.items].find(x => x.id === id);
+                if (!i)
+                    return;
+                selected = null;
+                selPt = null;
+                selPin = id;
+                cancelEdit(true);
+                showTab('step');
+                if (!presenting)
+                    openPanel(true);
+                if (i.x != null)
+                    centerOn({x: i.x - 1, y: i.y - 1, w: 2, h: 2});
+                render()
+            }
+            function selectPoint(pt) {
+                selected = null;
+                selPin = null;
+                selPt = pt;
+                cancelEdit(true);
+                showTab('step');
+                if (!presenting)
+                    openPanel(true);
+                render();
+                $('desc').focus()
+            }
+            function cancelEdit(quiet) {
+                if (editId === null)
+                    return;
+                editId = null;
+                ['desc', 'cause', 'idea', 'timeVal', 'times'].forEach(k => $(k).value = '');
+                $('sev').value = 3;
+                $('formTitle').textContent = 'Add a pain point';
+                $('save').textContent = 'Add pain point';
+                $('cancelEdit').classList.add('hidden')
+            }
+            function startEdit(id) {
+                const i = [...part.items, ...fac.items].find(x => x.id === id);
+                if (!i)
+                    return;
+                if (i.stepId)
+                    selectStep(i.stepId, true);
+                else if (i.x != null)
+                    selectPin(i.id);
+                else {
+                    selected = null;
+                    selPin = null;
+                    selPt = {general: true};
+                    showTab('step');
+                    render()
+                }
+                editId = id;
+                $('cat').value = i.category;
+                $('sev').value = i.severity;
+                $('desc').value = i.description || '';
+                $('cause').value = i.cause || '';
+                $('idea').value = i.idea || '';
+                $('timeVal').value = i.timeVal ?? '';
+                $('timeUnit').value = i.timeUnit || 'day';
+                $('times').value = i.times ?? '';
+                $('formTitle').textContent = 'Edit pain point';
+                $('save').textContent = 'Save changes';
+                $('cancelEdit').classList.remove('hidden');
+                render();
+                $('formWrap').classList.remove('hidden');
+                $('desc').focus()
             }
             function teamPath() {
                 const t = $('team').value;
@@ -3009,38 +1581,61 @@
             function card(i, opts={}) {
                 const s = byId[i.stepId];
                 return `<li style="border-left-color:${SEVC[i.severity]}">
-   <div class="t">${esc(i.category)} · Sev ${i.severity}${i.votes ? ` · ▲${i.votes}` : ''}</div>
+   <div class="t">${esc(i.category)} · Sev ${i.severity}${i.times !== '' && i.times != null ? ` · ×${i.times}` : ''}${prio(i) ? ` · ${fmtH(prio(i))} lost` : ''}${i.votes ? ` · ▲${i.votes}` : ''}</div>
    ${opts.showStep && s ? `<div class="s"><a href="#" data-go="${s.id}">${esc(s.label.slice(0, 60))}</a></div>` : ''}
+   ${!s && i.x != null ? `<div class="s"><a href="#" data-pin="${i.id}">📍 Map pin</a> · ${esc(i.team || '')} · ${esc(i.phase || '')}</div>` : ''}
+   ${!s && i.x == null ? `<div class="s">🌐 Whole process</div>` : ''}
    <div>${esc(i.description)}</div>
    ${i.cause ? `<div class="s"><b>Cause:</b> ${esc(i.cause)}</div>` : ''}
    ${i.idea ? `<div class="s"><b>Idea:</b> ${esc(i.idea)}</div>` : ''}
-   ${i.time ? `<div class="s"><b>Time lost:</b> ${esc(i.time)}</div>` : ''}
+   ${i.timeVal !== undefined && i.timeVal !== '' ? `<div class="s"><b>Time lost:</b> ${esc(i.timeVal)} ${UL[i.timeUnit] || ''} each time (≈${i.timeHrs} hr)</div>` : (i.time ? `<div class="s"><b>Time lost:</b> ${esc(i.time)}</div>` : '')}
    <div class="s">${esc(i.author || part.name || 'Me')}${i.authorTeam ? ' (' + esc(i.authorTeam) + ')' : ''}</div>
    <div class="acts">
     ${isFac() ? `<select data-status="${i.id}" class="inp" style="width:auto;padding:2px 4px;font-size:12px">${STATUSES.map(x => `<option ${x === (i.status || 'New') ? 'selected' : ''}>${x}</option>`).join('')}</select>
-      <button class="btn sm" data-vote="${i.id}" title="Dot vote">▲ Vote</button>` : ''}
+      <button class="btn sm" data-vote="${i.id}" title="One vote per pain point – click again to remove">${i.votes ? '▲ Voted' : '▲ Vote'}</button>` : ''}
+    <button class="btn sm" data-edit="${i.id}">Edit</button>
     <button class="btn sm danger" data-del="${i.id}">Delete</button>
    </div></li>`;
             }
             function renderStepPane() {
-                if (!selected) {
+                const pinItem = selPin ? [...part.items, ...fac.items].find(i => i.id === selPin) : null;
+                if (!selected && !selPt && !pinItem) {
                     $('noStep').classList.remove('hidden');
                     $('stepBox').classList.add('hidden');
                     return
                 }
                 $('noStep').classList.add('hidden');
                 $('stepBox').classList.remove('hidden');
-                const s = byId[selected]
-                  , n = neighbours(selected);
-                $('sTitle').textContent = s.label;
-                $('sTeam').innerHTML = `<span class="legend"><span><i style="background:${teamOf[s.team].color}"></i>${esc(s.team)}</span></span>`;
-                $('sPhase').textContent = s.phase;
-                $('sIn').innerHTML = linkList(n.inc);
-                $('sOut').innerHTML = linkList(n.out);
-                const list = visibleItems().filter(i => i.stepId === selected);
+                const stepMode = !!selected;
+                ['traceBtn', 'clearTrace'].forEach(k => $(k).classList.toggle('hidden', !stepMode));
+                let list = [];
+                if (stepMode) {
+                    const s = byId[selected]
+                      , n = neighbours(selected);
+                    $('sTitle').textContent = s.label;
+                    $('sTeam').innerHTML = `<span class="legend"><span><i style="background:${teamOf[s.team].color}"></i>${esc(s.team)}</span></span>`;
+                    $('sPhase').textContent = s.phase;
+                    $('sIn').innerHTML = linkList(n.inc);
+                    $('sOut').innerHTML = linkList(n.out);
+                    list = visibleItems().filter(i => i.stepId === selected)
+                } else {
+                    const src = pinItem || selPt;
+                    const gen = src.general || (pinItem && pinItem.x == null);
+                    $('sTitle').textContent = gen ? 'Whole process (not tied to a step)' : 'Pain point pinned on the map';
+                    const L = gen ? {team: '—', phase: '—'} : (pinItem ? pinItem : locOf(src.x, src.y));
+                    const tc = teamOf[L.team];
+                    $('sTeam').innerHTML = tc ? `<span class="legend"><span><i style="background:${tc.color}"></i>${esc(L.team)}</span></span>` : esc(L.team || '—');
+                    $('sPhase').textContent = L.phase || '—';
+                    $('sIn').textContent = '—';
+                    $('sOut').textContent = '—';
+                    list = pinItem ? [pinItem] : []
+                }
                 $('sCount').textContent = list.length;
                 $('sList').innerHTML = list.map(i => card(i)).join('') || '<div class="empty">None yet.</div>';
-                $('save').textContent = isFac() ? 'Add pain point (facilitator)' : 'Add pain point';
+                const showForm = stepMode || (!!selPt && !pinItem) || editId !== null;
+                $('formWrap').classList.toggle('hidden', !showForm);
+                if (editId === null)
+                    $('save').textContent = isFac() ? 'Add pain point (facilitator)' : 'Add pain point'
             }
             function renderBook() {
                 $('partBook').classList.toggle('hidden', isFac());
@@ -3053,7 +1648,7 @@
                 } else {
                     const cs = Object.values(fac.contributors);
                     $('contribCount').textContent = cs.length;
-                    $('contribList').innerHTML = cs.map(c => `<li style="border-left-color:var(--accent)"><div class="t">${esc(c.name)} <span class="tag">${esc(c.team || '')}</span></div><div class="s">${c.count} pain points · submitted ${new Date(c.submitted).toLocaleString()}</div>${c.notes ? `<div class="s"><b>Comments:</b> ${esc(c.notes)}</div>` : ''}<div class="acts"><button class="btn sm danger" data-rmc="${esc(c.name)}">Remove contributor</button></div></li>`).join('') || '<div class="empty">No workbooks imported yet.</div>';
+                    $('contribList').innerHTML = cs.map(c => `<li style="border-left-color:var(--accent)"><div class="t">${esc(c.name)} <span class="tag">${esc(c.team || '')}</span></div><div class="s">${c.count} pain points · submitted ${new Date(c.submitted).toLocaleString()} · map ${esc(c.mapVersion === MAP_VERSION ? 'v' + c.mapVersion : (c.mapVersion || 'original') + ' (older)')}</div>${c.notes ? `<div class="s"><b>Comments:</b> ${esc(c.notes)}</div>` : ''}<div class="acts"><button class="btn sm danger" data-rmc="${esc(c.name)}">Remove contributor</button></div></li>`).join('') || '<div class="empty">No workbooks imported yet.</div>';
                     const cur = $('fFilter').value;
                     $('fFilter').innerHTML = '<option value="all">Everyone</option>' + [...new Set(fac.items.map(i => i.author))].map(a => `<option ${a === cur ? 'selected' : ''}>${esc(a)}</option>`).join('');
                 }
@@ -3074,7 +1669,11 @@
                         st[s.id] = (st[s.id] || 0) + 1
                 }
                 );
-                $('iSteps').innerHTML = Object.entries(st).sort( (a, b) => b[1] - a[1]).slice(0, 8).map( ([id,n]) => `<div class="bar"><span style="width:auto;flex:1"><a href="#" data-go="${id}">${esc(byId[id].label.slice(0, 42))}</a></span><b style="background:#d32f2f;color:#fff;border-radius:10px;padding:0 7px">${n}</b></div>`).join('') || '<div class="empty" style="padding:6px">No data yet</div>';
+                const SS = stepStats();
+                $('iSteps').innerHTML = Object.entries(SS).sort( (a, b) => b[1].score - a[1].score || b[1].sev - a[1].sev || b[1].n - a[1].n).slice(0, 8).map( ([id,r]) => `<div class="bar"><span style="width:auto;flex:1"><a href="#" data-go="${id}">${esc(byId[id].label.slice(0, 42))}</a></span><span style="width:auto;color:var(--muted)">${r.score ? fmtH(r.score) : '—'}</span><b style="background:#d32f2f;color:#fff;border-radius:10px;padding:0 7px" title="pain points">${r.n}</b></div>`).join('') || '<div class="empty" style="padding:6px">No data yet</div>';
+                const nf = it.filter(i => !i.stepId);
+                if (nf.length)
+                    $('iSteps').insertAdjacentHTML('beforeend', `<div class="s" style="font-size:12px;color:var(--muted);margin-top:6px">+ ${nf.filter(i => i.x != null).length} map pin(s), ${nf.filter(i => i.x == null).length} whole-process item(s) not shown above</div>`);
                 bars('iTeams', by('team'));
                 bars('iPhases', by('phase'));
                 bars('iCats', by('category'));
@@ -3082,7 +1681,7 @@
 
             /* ---------- actions ---------- */
             function addItem() {
-                if (!selected)
+                if (!selected && !selPt && editId === null)
                     return;
                 const desc = $('desc').value.trim();
                 if (!desc) {
@@ -3090,21 +1689,51 @@
                     $('desc').focus();
                     return
                 }
-                const s = byId[selected];
-                const item = {
-                    id: uid(),
-                    stepId: s.id,
-                    step: s.label,
-                    team: s.team,
-                    phase: s.phase,
+                const tv = $('timeVal').value.trim()
+                  , tu = $('timeUnit').value
+                  , tm = $('times').value.trim();
+                const f = {
                     category: $('cat').value,
                     severity: +$('sev').value,
                     description: desc,
                     cause: $('cause').value.trim(),
                     idea: $('idea').value.trim(),
-                    time: $('time').value.trim(),
-                    created: new Date().toISOString()
+                    timeVal: tv === '' ? '' : +tv,
+                    timeUnit: tu,
+                    timeHrs: tv === '' ? '' : toHrs(+tv, tu),
+                    time: tv === '' ? '' : tv + ' ' + UL[tu],
+                    times: tm === '' ? '' : Math.max(0, Math.round(+tm))
                 };
+                if (editId !== null) {
+                    const it = [...part.items, ...fac.items].find(x => x.id === editId);
+                    if (it) {
+                        if (tv === '' && it.timeVal === undefined) {
+                            delete f.timeVal;
+                            delete f.timeUnit;
+                            delete f.timeHrs;
+                            delete f.time
+                        }
+                        Object.assign(it, f, {edited: new Date().toISOString()})
+                    }
+                    cancelEdit(true);
+                    editId = null;
+                    $('formTitle').textContent = 'Add a pain point';
+                    ['desc', 'cause', 'idea', 'timeVal', 'times'].forEach(k => $(k).value = '');
+                    saveAll();
+                    render();
+                    toast('Changes saved');
+                    return
+                }
+                const item = Object.assign({id: uid(), created: new Date().toISOString(), mapVersion: MAP_VERSION}, f);
+                if (selected) {
+                    const s = byId[selected];
+                    Object.assign(item, {stepId: s.id, step: s.label, team: s.team, phase: s.phase})
+                } else if (selPt.general) {
+                    Object.assign(item, {stepId: null, step: 'Whole process', team: '', phase: ''})
+                } else {
+                    const L = locOf(selPt.x, selPt.y);
+                    Object.assign(item, {stepId: null, step: 'Map pin', x: Math.round(selPt.x), y: Math.round(selPt.y), team: L.team, phase: L.phase})
+                }
                 if (isFac()) {
                     item.author = 'Facilitator';
                     item.status = 'New';
@@ -3115,7 +1744,12 @@
                     item.authorTeam = part.team;
                     part.items.push(item)
                 }
-                ['desc', 'cause', 'idea', 'time'].forEach(k => $(k).value = '');
+                ['desc', 'cause', 'idea', 'timeVal', 'times'].forEach(k => $(k).value = '');
+                $('sev').value = 3;
+                if (!selected) {
+                    selPt = null;
+                    selPin = item.id
+                }
                 saveAll();
                 render();
                 toast('Pain point added');
@@ -3160,7 +1794,8 @@
                 );
                 const wb = {
                     type: 'cis-participant-workbook',
-                    version: 2,
+                    version: 3,
+                    mapVersion: MAP_VERSION,
                     name: part.name,
                     team: part.team,
                     notes: part.notes,
@@ -3172,7 +1807,9 @@
                 render();
                 toast('Workbook saved to Downloads – send it to the facilitator');
             }
+            let lostN = 0;
             function importFiles(files) {
+                lostN = 0;
                 let added = 0
                   , dup = 0
                   , people = 0
@@ -3190,7 +1827,11 @@
                                 const name = wb.name || f.name;
                                 people++;
                                 const ex = new Set(fac.items.map(i => i.id));
-                                (wb.items || []).forEach(i => {
+                                (wb.items || []).map(x => migrateItem(Object.assign({}, x))).forEach(i => {
+                                    if (!i) {
+                                        lostN++;
+                                        return
+                                    }
                                     if (ex.has(i.id)) {
                                         dup++;
                                         return
@@ -3209,6 +1850,7 @@
                                     name,
                                     team: wb.team || '',
                                     notes: wb.notes || '',
+                                    mapVersion: wb.mapVersion || 'original',
                                     submitted: wb.submitted || new Date().toISOString(),
                                     count: fac.items.filter(i => i.author === name).length
                                 };
@@ -3220,7 +1862,7 @@
                         if (--left === 0) {
                             saveAll();
                             render();
-                            toast(`Imported ${people} workbook(s): ${added} new pain points` + (dup ? `, ${dup} duplicates skipped` : '') + (bad ? `, ${bad} file(s) not recognised` : ''))
+                            toast(`Imported ${people} workbook(s): ${added} new pain points` + (dup ? `, ${dup} duplicates skipped` : '') + (bad ? `, ${bad} file(s) not recognised` : '') + (lostN ? `, ${lostN} on removed boxes dropped` : ''))
                         }
                     }
                     ;
@@ -3237,28 +1879,29 @@
                 );
                 Object.assign(fac.contributors, wb.contributors || {});
             }
-            const COLS = [['step', 'Step'], ['team', 'Step team'], ['phase', 'Phase'], ['category', 'Category'], ['severity', 'Severity'], ['description', 'Description'], ['cause', 'Likely cause'], ['idea', 'Improvement idea'], ['time', 'Time lost'], ['author', 'Submitted by'], ['authorTeam', 'Submitter team'], ['status', 'Status'], ['votes', 'Votes'], ['created', 'Created']];
+            const COLS = [['step', 'Step'], ['team', 'Step team'], ['phase', 'Phase'], ['category', 'Category'], ['severity', 'Severity'], ['description', 'Description'], ['cause', 'Likely cause'], ['idea', 'Improvement idea'], ['time', 'Time lost (as entered)'], ['timeHrs', 'Hours lost each time'], ['times', 'Times it happens'], ['score', 'Score (total hours lost)'], ['author', 'Submitted by'], ['authorTeam', 'Submitter team'], ['status', 'Status'], ['votes', 'Votes'], ['created', 'Created']];
             function toCsv(items) {
+                items = items.map(decor);
                 return '\ufeff' + [COLS.map(c => c[1]).join(',')].concat(items.map(i => COLS.map( ([k]) => '"' + String(i[k] ?? '').replace(/"/g, '""') + '"').join(','))).join('\r\n')
             }
 
             /* ---------- register ---------- */
             let regSort = {
-                k: 'severity',
+                k: 'score',
                 d: -1
             };
             function openRegister() {
                 $('regModal').classList.remove('hidden');
                 $('regHead').innerHTML = COLS.filter(c => c[0] !== 'created').map( ([k,l]) => `<th data-sort="${k}">${l}${regSort.k === k ? (regSort.d > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('');
                 const q = $('regSearch').value.toLowerCase();
-                const rows = visibleItems().filter(i => !q || COLS.some( ([k]) => String(i[k] ?? '').toLowerCase().includes(q))).sort( (a, b) => {
+                const rows = visibleItems().map(decor).filter(i => !q || COLS.some( ([k]) => String(i[k] ?? '').toLowerCase().includes(q))).sort( (a, b) => {
                     const x = a[regSort.k] ?? ''
                       , y = b[regSort.k] ?? '';
                     return (typeof x === 'number' || !isNaN(+x) && x !== '' ? (+x) - (+y) : String(x).localeCompare(String(y))) * regSort.d
                 }
                 );
                 $('regCount').textContent = rows.length + ' items';
-                $('regBody').innerHTML = rows.map(i => `<tr>${COLS.filter(c => c[0] !== 'created').map( ([k]) => k === 'step' ? `<td><a href="#" data-go="${i.stepId}" data-close="1">${esc(i.step)}</a></td>` : k === 'severity' ? `<td><b style="color:${SEVC[i.severity]}">●</b> ${i.severity}</td>` : `<td>${esc(i[k])}</td>`).join('')}</tr>`).join('');
+                $('regBody').innerHTML = rows.map(i => `<tr>${COLS.filter(c => c[0] !== 'created').map( ([k]) => k === 'step' ? (i.stepId ? `<td><a href="#" data-go="${i.stepId}" data-close="1">${esc(i.step)}</a></td>` : i.x != null ? `<td><a href="#" data-pin="${i.id}" data-close="1">📍 Map pin (${esc(i.team)})</a></td>` : `<td>${esc(i.step)}</td>`) : k === 'severity' ? `<td><b style="color:${SEVC[i.severity]}">●</b> ${i.severity}</td>` : `<td>${esc(i[k])}</td>`).join('')}</tr>`).join('');
             }
 
             /* ---------- panel / tabs / mode / theme ---------- */
@@ -3278,7 +1921,7 @@
                 $('mPart').classList.toggle('on', m === 'participant');
                 $('mFac').classList.toggle('on', m === 'facilitator');
                 $('improveLink').classList.toggle('hidden', m !== 'facilitator');
-                $('modeSub').textContent = m === 'facilitator' ? 'Facilitator workbook – consolidated review' : 'Participant workbook';
+                $('modeSub').textContent = (m === 'facilitator' ? 'Facilitator workbook – consolidated review' : 'Participant workbook') + ' · Map v' + MAP_VERSION;
                 saveAll();
                 render()
             }
@@ -3435,7 +2078,12 @@
                 }
                 );
                 window.addEventListener('mouseup', e => {
-                    if (d && !d.m && !e.target.closest('.step') && e.target.closest('#wrap')) {/* click on blank */
+                    if (d && !d.m && e.target.closest('#svg') && !e.target.closest('.step,.pin,.badge') && ![gHead, gLab, gCorner].some(g => g.contains(e.target))) {
+                        const r = w.getBoundingClientRect();
+                        const x = (e.clientX - r.left + w.scrollLeft) / scale
+                          , y = (e.clientY - r.top + w.scrollTop) / scale;
+                        if (x >= lx && x <= rx && y >= teamTop && y <= Math.max(...D.teams.map(q => q.y2)))
+                            selectPoint({x, y})
                     }
                     d = null;
                     w.classList.remove('drag')
@@ -3471,7 +2119,7 @@
             );
             $('pTeam').append(new Option('Other / not listed','Other'));
             STATUSES.forEach(s => $('sFilter').append(new Option(s,s)));
-            $('legend').insertAdjacentHTML('beforeend', `<span><i style="background:#d32f2f;border-radius:50%"></i>Pain-point count</span><span><i style="border:2px dashed #555;background:none"></i>Cross-team handoff</span>`);
+            $('legend').insertAdjacentHTML('beforeend', `<span><i style="background:#d32f2f;border-radius:50%"></i>Badge = count; shade = hours lost (light → dark red)</span><span><i style="border:2px dashed #7a1010;background:#d6463c;border-radius:50%"></i>Map pin</span><span><i style="border:2px dashed #555;background:none"></i>Cross-team handoff</span>`);
             $('pName').value = part.name;
             if (!part.team)
                 part.team = D.teams[0].name;
@@ -3545,6 +2193,8 @@
             $('mFac').onclick = () => setMode('facilitator');
             $('themeBtn').onclick = () => setTheme(ui.theme === 'dark' ? 'light' : 'dark');
             $('save').onclick = addItem;
+            $('cancelEdit').onclick = () => cancelEdit();
+            $('genBtn').onclick = () => selectPoint({general: true});
             $('traceBtn').onclick = () => {
                 if (selected) {
                     trace = traceFrom(selected);
@@ -3571,7 +2221,9 @@
                 r.onload = () => {
                     try {
                         const wb = JSON.parse(r.result);
-                        part.items = wb.items || [];
+                        const src = wb.items || [];
+                        part.items = src.map(x => migrateItem(Object.assign({}, x))).filter(Boolean);
+                        const lost = src.length - part.items.length;
                         part.name = wb.name || part.name;
                         part.team = wb.team || part.team;
                         part.notes = wb.notes || '';
@@ -3580,7 +2232,7 @@
                         $('pNotes').value = part.notes;
                         saveAll();
                         render();
-                        toast('Workbook restored')
+                        toast('Workbook restored' + (wb.mapVersion === MAP_VERSION ? '' : ' – from an older map') + (lost ? `; ${lost} pain point(s) on removed boxes were dropped` : ''))
                     } catch {
                         toast('Not a valid workbook file')
                     }
@@ -3662,6 +2314,19 @@
                     selectStep(go.dataset.go, true);
                     return
                 }
+                const pn = e.target.closest('[data-pin]');
+                if (pn) {
+                    e.preventDefault();
+                    if (pn.dataset.close)
+                        $('regModal').classList.add('hidden');
+                    selectPin(pn.dataset.pin);
+                    return
+                }
+                const ed = e.target.closest('[data-edit]');
+                if (ed) {
+                    startEdit(ed.dataset.edit);
+                    return
+                }
                 const del = e.target.closest('[data-del]');
                 if (del) {
                     delItem(del.dataset.del);
@@ -3671,7 +2336,7 @@
                 if (v) {
                     const i = fac.items.find(x => x.id === v.dataset.vote);
                     if (i) {
-                        i.votes = (i.votes || 0) + 1;
+                        i.votes = i.votes ? 0 : 1;
                         saveAll();
                         render()
                     }
@@ -3721,6 +2386,9 @@
                     setZoom(scale / 1.2)
                 else if (e.key === 'Escape') {
                     selected = null;
+                    selPt = null;
+                    selPin = null;
+                    cancelEdit();
                     trace = null;
                     $('search').value = '';
                     $('regModal').classList.add('hidden');
