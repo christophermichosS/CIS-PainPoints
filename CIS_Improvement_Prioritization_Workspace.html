@@ -1,43 +1,1814 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CIS Improvement Prioritization Workspace</title>
-<style>
-:root{--bg:#dfe5eb;--surface:#eef2f5;--panel:#f7f8fa;--ink:#203040;--muted:#637282;--line:#c4ced8;--brand:#173f63;--brand2:#2d689b;--accent:#2878bd;--red:#c62828;--green:#2e7d32;--amber:#d17a00}body.dark{--bg:#182129;--surface:#222d37;--panel:#2b3742;--ink:#e6edf3;--muted:#a8b5c1;--line:#465563;--brand:#10283c;--brand2:#1d4f73;--accent:#63a9e8}*{box-sizing:border-box}html,body{height:100%}body{margin:0;font:14px/1.45 Segoe UI,Arial;color:var(--ink);background:var(--bg);display:flex;flex-direction:column}button,input,select,textarea{font:inherit;color:inherit}header{background:linear-gradient(120deg,var(--brand),var(--brand2));color:white;padding:14px 18px;display:flex;align-items:center;gap:14px}h1{font-size:20px;margin:0}.sub{font-size:12px;opacity:.8}.grow{flex:1}.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px 10px;cursor:pointer}.btn:hover{border-color:var(--accent)}header .btn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.55)}header .btn:hover{background:rgba(255,255,255,.22);border-color:#fff}.btn.primary
-{background:var(--accent);color:white;border-color:var(--accent)}.btn.danger{color:var(--red)}.top{display:flex;gap:8px;padding:9px 12px;background:var(--surface);border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap}.pill{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:3px 9px;font-size:12px}.main{display:grid;grid-template-columns:230px 1fr;min-height:0;flex:1}.nav{background:var(--surface);border-right:1px solid var(--line);padding:12px;overflow:auto}.nav button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:10px;border-radius:6px;margin:2px 0;cursor:pointer;color:var(--ink)}.nav button.on{background:var(--accent);color:white}.nav .step{font-size:11px;color:var(--muted);margin:14px 8px 3px;text-transform:uppercase;font-weight:700}.content{padding:18px;overflow:auto}.view{display:none}.view.on{display:block}.banner,.card{background:var(--panel);border:1px solid var(--line);border-radius:9px}.banner{padding:13px 15px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.card{padding:13px}.card h3{font-size:15px;margin:0 0 7px}.meta{font-size:12px;color:var(--muted)}.tag{display:inline-block;border:1px solid var(--line);border-radius:10px;padding:1px 7px;font-size:11px;margin:2px;background:var(--surface)}label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:8px 0 3px}.inp{width:100%;padding:7px;border:1px solid var(--line);border-radius:5px;background:var(--panel)}textarea.inp{min-height:70px;resize:vertical}.row{display:flex;gap:8px}.row>*{flex:1}.drop{border:2px dashed var(--line);padding:22px;text-align:center;border-radius:9px;color:var(--muted)}.drop.over{border-color:var(--accent);background:var(--panel)}table{width:100%;border-collapse:collapse;background:var(--panel);font-size:12.5px}th{text-align:left;background:var(--surface);position:sticky;top:0;padding:7px;border-bottom:2px solid var(--line)}td{padding:7px;border-bottom:1px solid var(--line);vertical-align:top}.score{font-size:22px;font-weight:700;color:var(--accent)}.matrix{position:relative;height:520px;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}.quad{position:absolute;width:50%;height:50%;padding:10px;font-weight:700;opacity:.17}.q1{left:0;top:0;background:#52a55a}.q2{right:0;top:0;background:#477fbd}.q3{left:0;bottom:0;background:#dbb34d}.q4{right:0;bottom:0;background:#c66060}.axis{position:absolute;background:var(--line)}.axis.v{left:50%;top:0;width:1px;height:100%}.axis.h{top:50%;left:0;width:100%;height:1px}.bubble{position:absolute;transform:translate(-50%,50%);border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;padding:5px;cursor:pointer;border:2px solid white;box-shadow:0 2px 7px #0005;min-width:42px;min-height:42px}.hidden{display:none!important}.hot{border-left:5px solid var(--red)}.cm{border-left:5px solid var(--accent)}.action{border-left:5px solid var(--green)}.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;z-index:20}.modalbox{width:min(900px,94vw);max-height:90vh;overflow:auto;background:var(--surface);border-radius:10px;padding:18px}.right{float:right}.empty{text-align:center;color:var(--muted);padding:30px}#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#203a52;color:white;border-radius:6px;padding:9px 15px;opacity:0;transition:.2s}#toast.show{opacity:1}@media(max-width:800px){.main{grid-template-columns:1fr}.nav{display:flex;overflow:auto}.nav .step{display:none}.nav button{white-space:nowrap}.row{display:block}}
-</style></head><body>
-<header><div><h1>CIS Improvement Prioritization Workspace</h1><div class="sub">Pain points → themes → root causes → countermeasures → ranked action plan</div></div><div class="grow"></div><span id="summary"></span><button class="btn" id="theme">◐ Theme</button></header>
-<div class="top"><button class="btn primary" id="importBtn">Import facilitator workbook</button><input type="file" id="file" accept=".json" hidden multiple><button class="btn" id="save">Save workspace</button><label class="btn">Open workspace<input type="file" id="open" accept=".json" hidden></label><button class="btn" id="csv">Export action plan CSV</button><span class="grow"></span><input class="inp" id="search" placeholder="Search…" style="width:230px"><span class="pill" id="filterInfo">All items</span></div>
-<div class="main"><nav class="nav"><div class="step">1. Intake</div><button data-v="intake" class="on">Pain-point intake</button><button data-v="triage">Validate & triage</button><div class="step">2. Analyze</div><button data-v="themes">Issue themes</button><button data-v="causes">Root causes</button><div class="step">3. Improve</div><button data-v="counter">Countermeasures</button><button data-v="matrix">Benefit-effort matrix</button><button data-v="ranking">Ranked recommendations</button><div class="step">4. Execute</div><button data-v="actions">Action plan</button><button data-v="dashboard">Portfolio dashboard</button></nav>
-<main class="content">
-<section id="intake" class="view on"><div class="banner"><b>Import the facilitator workbook from the process-review site.</b> This workspace preserves submitter, step, phase, severity, votes, status, and evidence. Duplicate IDs are skipped.</div><div class="drop" id="drop">Drop facilitator or participant workbook JSON files here<br><button class="btn" onclick="file.click()">Choose files</button></div><h2>Imported pain points</h2><div id="painCards" class="grid"></div></section>
-<section id="triage" class="view"><div class="banner">Confirm the problem before discussing solutions. Add frequency, impact type, evidence, a concise facilitator problem statement, and decide whether the issue advances.</div><div id="triageCards" class="grid"></div></section>
-<section id="themes" class="view"><div class="banner"><button class="btn primary right" id="newTheme">+ New theme</button><b>Group related pain points into a validated issue theme.</b> Original observations remain intact and traceable.</div><div id="themeCards" class="grid"></div></section>
-<section id="causes" class="view"><div class="banner">For each theme, document a supported root cause. Use the Five Whys and the cause categories, but stop before answers become speculation.</div><div id="causeCards" class="grid"></div></section>
-<section id="counter" class="view"><div class="banner"><button class="btn primary right" id="newCM">+ Propose countermeasure</button><b>Generate multiple options before choosing.</b> Each proposal must link to a theme/root cause and define a measurable expected outcome.</div><div id="cmCards" class="grid"></div></section>
-<section id="matrix" class="view"><div class="banner">Bubble position reflects benefit and effort. Bubble size reflects the number of linked pain points. Click a bubble to edit the proposal.</div><div class="matrix" id="mx"><div class="quad q1">Quick wins<br>High benefit / Lower effort</div><div class="quad q2">Major initiatives<br>High benefit / Higher effort</div><div class="quad q3">Fill-ins<br>Lower benefit / Lower effort</div><div class="quad q4">Reconsider<br>Lower benefit / Higher effort</div><div class="axis v"></div><div class="axis h"></div></div></section>
-<section id="ranking" class="view"><div class="banner"><b>Decision-support ranking, not an automatic decision.</b> Score = Benefit 25% + Coverage 15% + Alignment 15% + Feasibility 15% + Confidence 10% + Sustainability 10% + inverse Effort 5% + inverse Risk 5%.</div><div style="overflow:auto"><table><thead><tr><th>Rank</th><th>Countermeasure</th><th>Score</th><th>Benefit</th><th>Effort</th><th>Confidence</th><th>Coverage</th><th>Decision</th></tr></thead><tbody id="rankBody"></tbody></table></div></section>
-<section id="actions" class="view"><div class="banner">Approve a countermeasure in the ranked list to create its action-plan record. Assign a real owner, first action, target dates, success measure, and dependencies.</div><div id="actionCards" class="grid"></div></section>
-<section id="dashboard" class="view"><div id="dash" class="grid"></div></section>
-</main></div>
-<div id="modal" class="modal hidden"><div class="modalbox"><button class="btn right" onclick="closeModal()">✕ Close</button><div id="modalContent"></div></div></div><div id="toast"></div>
-<script>
-const $=x=>document.getElementById(x),uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now()+Math.random(),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let S=load();function load(){try{return Object.assign({type:'cis-improvement-workspace',version:1,pains:[],themes:[],cms:[],actions:[]},JSON.parse(localStorage.getItem('cisImproveV1')||'{}'))}catch{return{type:'cis-improvement-workspace',version:1,pains:[],themes:[],cms:[],actions:[]}}}function persist(){localStorage.setItem('cisImproveV1',JSON.stringify(S));render()}function toast(x){$('toast').textContent=x;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2300)}
-const freq=['Unknown','Every cycle','Frequently','Occasionally','Rarely'],impact=['Time','Quality','Workload','Risk','Cost','Stakeholder experience'],states=['New','Needs clarification','Validated','Duplicate','Combined into theme','Out of scope','Advance to root-cause analysis','Already addressed'];
-function dl(n,t,ty='application/json'){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:ty}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
-function importFiles(fs){let left=fs.length,add=0;[...fs].forEach(f=>{let r=new FileReader;r.onload=()=>{try{let w=JSON.parse(r.result);if(w.type==='cis-improvement-workspace'){S=w;add=w.pains.length}else{let items=w.items||[];let seen=new Set(S.pains.map(x=>x.id));items.forEach(i=>{if(!seen.has(i.id)){S.pains.push({...i,frequency:i.frequency||'Unknown',impactType:i.impactType||'Time',evidence:i.evidence||'',problemStatement:i.problemStatement||'',triage:i.status||'New',advance:false,themeId:null});add++}})}}catch{}if(--left===0){persist();toast(`Imported ${add} pain points`)}};r.readAsText(f)})}
-function painCard(p,edit=false){return `<div class="card hot"><h3>${esc(p.step||'Unlinked pain point')}</h3><div class="meta">${esc(p.phase||'')} · ${esc(p.team||'')} · ${esc(p.author||'Unknown')} · Severity ${p.severity||'?'}</div><p>${esc(p.description)}</p>${edit?`<label>Status</label><select class="inp" data-p="${p.id}" data-k="triage">${states.map(x=>`<option ${x===p.triage?'selected':''}>${x}</option>`).join('')}</select><div class="row"><div><label>Frequency</label><select class="inp" data-p="${p.id}" data-k="frequency">${freq.map(x=>`<option ${x===p.frequency?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Impact type</label><select class="inp" data-p="${p.id}" data-k="impactType">${impact.map(x=>`<option ${x===p.impactType?'selected':''}>${x}</option>`).join('')}</select></div></div><label>Evidence / example</label><textarea class="inp" data-p="${p.id}" data-k="evidence">${esc(p.evidence)}</textarea><label>Validated problem statement</label><textarea class="inp" data-p="${p.id}" data-k="problemStatement">${esc(p.problemStatement)}</textarea><label><input type="checkbox" data-advance="${p.id}" ${p.advance?'checked':''}> Advance to root-cause session</label>`:`<span class="tag">${esc(p.category||'Other')}</span><span class="tag">${esc(p.triage||'New')}</span>`}</div>`}
-function render(){let q=$('search').value.toLowerCase(),ps=S.pains.filter(p=>!q||JSON.stringify(p).toLowerCase().includes(q));$('painCards').innerHTML=ps.map(p=>painCard(p)).join('')||'<div class="empty">Import a workbook to begin.</div>';$('triageCards').innerHTML=ps.map(p=>painCard(p,true)).join('')||'<div class="empty">No pain points.</div>';
-$('themeCards').innerHTML=S.themes.map(themeCard).join('')||'<div class="empty">Create a theme and link validated pain points.</div>';$('causeCards').innerHTML=S.themes.map(causeCard).join('')||'<div class="empty">Create themes first.</div>';$('cmCards').innerHTML=S.cms.map(cmCard).join('')||'<div class="empty">Propose at least two countermeasures per root cause.</div>';renderMatrix();renderRank();renderActions();renderDash();$('summary').textContent=`${S.pains.length} pain points · ${S.themes.length} themes · ${S.cms.length} countermeasures`}
-function themeCard(t){let linked=S.pains.filter(p=>p.themeId===t.id);return `<div class="card"><h3>${esc(t.id)} · ${esc(t.title)}</h3><div class="meta">${linked.length} linked pain points · ${esc(t.status||'Draft')}</div><p>${esc(t.statement||'')}</p><span class="tag">Highest severity ${Math.max(0,...linked.map(x=>+x.severity||0))}</span><button class="btn right" onclick="editTheme('${t.id}')">Edit</button></div>`}
-function causeCard(t){return `<div class="card"><h3>${esc(t.id)} · ${esc(t.title)}</h3><label>Cause category</label><select class="inp" data-t="${t.id}" data-k="causeCategory">${['People and capacity','Process and handoffs','Data and inputs','Systems and tools','Rules and methodology','Governance and approvals','Documentation and knowledge','Timing and dependencies'].map(x=>`<option ${x===t.causeCategory?'selected':''}>${x}</option>`).join('')}</select><label>Five Whys / causal chain</label><textarea class="inp" data-t="${t.id}" data-k="whys" placeholder="1. Why…\n2. Why…">${esc(t.whys)}</textarea><label>Validated root cause</label><textarea class="inp" data-t="${t.id}" data-k="rootCause">${esc(t.rootCause)}</textarea><div class="row"><div><label>Confidence</label><select class="inp" data-t="${t.id}" data-k="causeConfidence">${[1,2,3,4,5].map(x=>`<option ${x==t.causeConfidence?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Validated by</label><input class="inp" data-t="${t.id}" data-k="validatedBy" value="${esc(t.validatedBy)}"></div></div></div>`}
-function score(c){return (c.benefit*.25+c.coverage*.15+c.alignment*.15+c.feasibility*.15+c.confidence*.10+c.sustainability*.10+(6-c.effort)*.05+(6-c.risk)*.05)*20}function cmCard(c){let t=S.themes.find(x=>x.id===c.themeId);return `<div class="card cm"><h3>${esc(c.id)} · ${esc(c.title)}</h3><div class="meta">${esc(t?.title||'Unlinked')} · Score ${score(c).toFixed(0)}/100 · ${esc(c.decision)}</div><p>${esc(c.description)}</p><span class="tag">Benefit ${c.benefit}</span><span class="tag">Effort ${c.effort}</span><span class="tag">Confidence ${c.confidence}</span><button class="btn right" onclick="editCM('${c.id}')">Edit</button></div>`}
-function renderMatrix(){let m=$('mx');m.querySelectorAll('.bubble').forEach(x=>x.remove());S.cms.forEach(c=>{let b=document.createElement('div');b.className='bubble';let count=S.pains.filter(p=>p.themeId===c.themeId).length;b.style.left=((c.effort-.5)/5*100)+'%';b.style.bottom=((c.benefit-.5)/5*100)+'%';let sz=42+Math.min(45,count*5);b.style.width=b.style.height=sz+'px';b.textContent=c.id;b.title=c.title;b.onclick=()=>editCM(c.id);m.append(b)})}
-function renderRank(){let a=[...S.cms].sort((x,y)=>score(y)-score(x));$('rankBody').innerHTML=a.map((c,i)=>`<tr><td>${i+1}</td><td><b>${esc(c.id)}</b> ${esc(c.title)}</td><td class="score">${score(c).toFixed(0)}</td><td>${c.benefit}</td><td>${c.effort}</td><td>${c.confidence}</td><td>${c.coverage}</td><td><select class="inp" data-cm="${c.id}" data-k="decision">${['Proposed','Approved','Pilot','Further analysis','Not proceeding'].map(x=>`<option ${x===c.decision?'selected':''}>${x}</option>`).join('')}</select></td></tr>`).join('')}
-function renderActions(){let approved=S.cms.filter(c=>['Approved','Pilot'].includes(c.decision));approved.forEach(c=>{if(!S.actions.some(a=>a.cmId===c.id))S.actions.push({id:'AP-'+String(S.actions.length+1).padStart(3,'0'),cmId:c.id,owner:'',firstAction:'',start:'',due:'',measure:c.measure||'',baseline:'',dependencies:'',status:'Proposed',review:'Biweekly'})});$('actionCards').innerHTML=S.actions.map(a=>{let c=S.cms.find(x=>x.id===a.cmId);return `<div class="card action"><h3>${esc(a.id)} · ${esc(c?.title||a.cmId)}</h3>${[['owner','Owner'],['firstAction','First action'],['start','Target start'],['due','Target completion'],['measure','Success measure'],['baseline','Baseline'],['dependencies','Dependencies'],['review','Review frequency']].map(([k,l])=>`<label>${l}</label><input class="inp" data-a="${a.id}" data-k="${k}" value="${esc(a[k])}">`).join('')}<label>Status</label><select class="inp" data-a="${a.id}" data-k="status">${['Proposed','Approved','In progress','Blocked','Complete'].map(x=>`<option ${x===a.status?'selected':''}>${x}</option>`).join('')}</select></div>`}).join('')||'<div class="empty">Approve or pilot a countermeasure to create an action.</div>'}
-function renderDash(){let valid=S.pains.filter(p=>p.triage==='Validated'||p.advance).length,covered=S.pains.filter(p=>p.themeId&&S.cms.some(c=>c.themeId===p.themeId)).length,hi=S.pains.filter(p=>+p.severity>=4),hiCov=hi.filter(p=>p.themeId&&S.cms.some(c=>c.themeId===p.themeId)).length;let cards=[['Validated pain points',valid,S.pains.length],['Pain-point coverage',covered,S.pains.length],['High-severity coverage',hiCov,hi.length],['Approved / pilot countermeasures',S.cms.filter(c=>['Approved','Pilot'].includes(c.decision)).length,S.cms.length],['Actions complete',S.actions.filter(a=>a.status==='Complete').length,S.actions.length]];$('dash').innerHTML=cards.map(([n,x,d])=>`<div class="card"><h3>${n}</h3><div class="score">${d?Math.round(x/d*100):0}%</div><div class="meta">${x} of ${d}</div></div>`).join('')}
-function openModal(h){$('modalContent').innerHTML=h;$('modal').classList.remove('hidden')}function closeModal(){$('modal').classList.add('hidden')}
-function editTheme(id){let t=S.themes.find(x=>x.id===id),eligible=S.pains.filter(p=>p.advance||p.triage==='Validated'||p.themeId===id);openModal(`<h2>${t?'Edit':'New'} issue theme</h2><input type="hidden" id="eId" value="${t?.id||''}"><label>Theme title</label><input class="inp" id="eTitle" value="${esc(t?.title||'')}"><label>Validated problem statement</label><textarea class="inp" id="eStatement">${esc(t?.statement||'')}</textarea><label>Status</label><select class="inp" id="eStatus">${['Draft','Validated','Parked'].map(x=>`<option ${x===t?.status?'selected':''}>${x}</option>`).join('')}</select><label>Link pain points</label><div style="max-height:280px;overflow:auto">${eligible.map(p=>`<label><input type="checkbox" class="plink" value="${p.id}" ${p.themeId===id?'checked':''}> ${esc(p.step)} — ${esc(p.description.slice(0,100))}</label>`).join('')}</div><button class="btn primary" onclick="saveTheme()">Save theme</button>`)}function saveTheme(){let id=$('eId').value||'TH-'+String(S.themes.length+1).padStart(3,'0'),t=S.themes.find(x=>x.id===id);if(!t){t={id};S.themes.push(t)}t.title=$('eTitle').value;t.statement=$('eStatement').value;t.status=$('eStatus').value;document.querySelectorAll('.plink').forEach(x=>{let p=S.pains.find(p=>p.id===x.value);if(x.checked)p.themeId=id;else if(p.themeId===id)p.themeId=null});closeModal();persist()}
-function editCM(id){let c=S.cms.find(x=>x.id===id);openModal(`<h2>${c?'Edit':'New'} countermeasure</h2><input type="hidden" id="cId" value="${c?.id||''}"><label>Title</label><input class="inp" id="cTitle" value="${esc(c?.title||'')}"><label>Theme / root cause addressed</label><select class="inp" id="cTheme">${S.themes.map(t=>`<option value="${t.id}" ${t.id===c?.themeId?'selected':''}>${esc(t.id+' · '+t.title)}</option>`).join('')}</select><label>Description</label><textarea class="inp" id="cDesc">${esc(c?.description||'')}</textarea><label>Expected measurable outcome</label><textarea class="inp" id="cMeasure">${esc(c?.measure||'')}</textarea><div class="grid">${[['benefit','Benefit'],['coverage','Pain-point coverage'],['alignment','Strategic alignment'],['feasibility','Feasibility'],['confidence','Confidence'],['sustainability','Sustainability'],['effort','Effort'],['risk','Implementation risk']].map(([k,l])=>`<div><label>${l} (1–5)</label><select class="inp" id="c_${k}">${[1,2,3,4,5].map(x=>`<option ${x==(c?.[k]||3)?'selected':''}>${x}</option>`).join('')}</select></div>`).join('')}</div><button class="btn primary" onclick="saveCM()">Save countermeasure</button>`)}function saveCM(){let id=$('cId').value||'CM-'+String(S.cms.length+1).padStart(3,'0'),c=S.cms.find(x=>x.id===id);if(!c){c={id,decision:'Proposed'};S.cms.push(c)}c.title=$('cTitle').value;c.themeId=$('cTheme').value;c.description=$('cDesc').value;c.measure=$('cMeasure').value;['benefit','coverage','alignment','feasibility','confidence','sustainability','effort','risk'].forEach(k=>c[k]=+$('c_'+k).value);closeModal();persist()}
-function valChange(e,prefix,list){let id=e.target.dataset[prefix],k=e.target.dataset.k;if(!id||!k)return;let o=list.find(x=>x.id===id);if(o){o[k]=e.target.type==='checkbox'?e.target.checked:e.target.value;persist()}}
-document.addEventListener('change',e=>{if(e.target.dataset.p)valChange(e,'p',S.pains);if(e.target.dataset.t)valChange(e,'t',S.themes);if(e.target.dataset.cm){valChange(e,'cm',S.cms);renderActions();persist()}if(e.target.dataset.a)valChange(e,'a',S.actions);if(e.target.dataset.advance){let p=S.pains.find(x=>x.id===e.target.dataset.advance);p.advance=e.target.checked;persist()}});document.addEventListener('input',e=>{if(e.target.matches('textarea[data-p],input[data-p]'))valChange(e,'p',S.pains);if(e.target.matches('textarea[data-t],input[data-t]'))valChange(e,'t',S.themes);if(e.target.matches('input[data-a]'))valChange(e,'a',S.actions)});
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===b.dataset.v));render()});$('importBtn').onclick=()=>$('file').click();$('file').onchange=e=>importFiles(e.target.files);$('open').onchange=e=>importFiles(e.target.files);let d=$('drop');['dragover','dragenter'].forEach(k=>d.addEventListener(k,e=>{e.preventDefault();d.classList.add('over')}));['dragleave','drop'].forEach(k=>d.addEventListener(k,e=>{e.preventDefault();d.classList.remove('over')}));d.ondrop=e=>importFiles(e.dataTransfer.files);$('save').onclick=()=>dl('CIS_Improvement_Workspace.json',JSON.stringify(S,null,2));$('newTheme').onclick=()=>editTheme();$('newCM').onclick=()=>editCM();$('search').oninput=render;$('theme').onclick=()=>document.body.classList.toggle('dark');$('csv').onclick=()=>{let cols=['id','cmId','owner','firstAction','start','due','measure','baseline','dependencies','status','review'];let csv='\ufeff'+[cols.join(',')].concat(S.actions.map(a=>cols.map(k=>'"'+String(a[k]||'').replace(/"/g,'""')+'"').join(','))).join('\r\n');dl('CIS_Action_Plan.csv',csv,'text/csv')};render();
-</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>CIS Process Review Workbook - Part 2</title>
+        <style>
+            :root {
+                --app: #dfe4ea;
+                --surface: #eef1f4;
+                --panel: #f3f5f7;
+                --card: #f7f8f9;
+                --ink: #1f2d3a;
+                --muted: #5b6a78;
+                --line: #c5cfd9;
+                --brand: #1d3f63;
+                --brand2: #2b5b8a;
+                --accent: #2b6cb0;
+                --danger: #c62828;
+                --canvas: #d6dce3;
+                --phase: #e7ebef;
+                --phaseHead: #3a5068;
+                --phaseHeadInk: #f2f5f8;
+                --edge: #6d7b89;
+                --ok: #2e7d5b;
+                --warn: #c27a10
+            }
+
+            body.dark {
+                --app: #1b222b;
+                --surface: #232c37;
+                --panel: #26303b;
+                --card: #2d3845;
+                --ink: #e3e8ee;
+                --muted: #a3b0bd;
+                --line: #3b4857;
+                --brand: #14273b;
+                --brand2: #1e3a57;
+                --accent: #5aa0e6;
+                --canvas: #1e262f;
+                --phase: #25303b;
+                --phaseHead: #0f1a26;
+                --phaseHeadInk: #e3e8ee;
+                --edge: #8a99a8;
+                --ok: #4cb68a;
+                --warn: #e0a040
+            }
+
+            * {
+                box-sizing: border-box
+            }
+
+            html,body {
+                height: 100%
+            }
+
+            body {
+                margin: 0;
+                font: 14px/1.45 "Segoe UI",Arial,sans-serif;
+                color: var(--ink);
+                background: var(--app);
+                display: flex;
+                flex-direction: column;
+                overflow: hidden
+            }
+
+            button,select,input,textarea {
+                font: inherit;
+                color: inherit
+            }
+
+            header {
+                background: linear-gradient(120deg,var(--brand),var(--brand2));
+                color: #f4f7fa;
+                padding: 10px 18px;
+                display: flex;
+                align-items: center;
+                gap: 16px
+            }
+
+            header h1 {
+                font-size: 18px;
+                margin: 0
+            }
+
+            header .sub {
+                font-size: 12px;
+                opacity: .8
+            }
+
+            .hstats {
+                font-size: 12px;
+                opacity: .9;
+                white-space: nowrap;
+                margin-left: auto
+            }
+
+            .iconbtn {
+                background: rgba(255,255,255,.12);
+                border: 0;
+                color: #fff;
+                border-radius: 6px;
+                padding: 6px 9px;
+                cursor: pointer;
+                font-size: 13px
+            }
+
+            .toolbar {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 12px;
+                background: var(--surface);
+                border-bottom: 1px solid var(--line)
+            }
+
+            .btn,.toolbar input[type=date] {
+                border: 1px solid var(--line);
+                background: var(--card);
+                border-radius: 6px;
+                padding: 6px 10px;
+                cursor: pointer
+            }
+
+            .btn:hover {
+                border-color: var(--accent)
+            }
+
+            .btn.primary {
+                background: var(--accent);
+                border-color: var(--accent);
+                color: #fff
+            }
+
+            .btn.danger {
+                color: var(--danger)
+            }
+
+            .btn.sm {
+                padding: 3px 8px;
+                font-size: 12px
+            }
+
+            .btn.on {
+                background: var(--accent);
+                border-color: var(--accent);
+                color: #fff
+            }
+
+            .btn.danger.on {
+                background: var(--danger);
+                border-color: var(--danger);
+                color: #fff
+            }
+
+            .sep {
+                width: 1px;
+                height: 24px;
+                background: var(--line)
+            }
+
+            .spacer {
+                flex: 1
+            }
+
+            .pill {
+                font-size: 12px;
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                padding: 3px 9px;
+                white-space: nowrap
+            }
+
+            .pill b {
+                font-size: 13px
+            }
+
+            .pill.warn b {
+                color: var(--warn)
+            }
+
+            .main {
+                flex: 1;
+                display: flex;
+                min-height: 0
+            }
+
+            #wrap {
+                flex: 1;
+                overflow: auto;
+                background: var(--canvas);
+                padding: 16px 18px 0
+            }
+
+            nav {
+                width: 240px;
+                background: var(--panel);
+                border-right: 1px solid var(--line);
+                display: flex;
+                flex-direction: column;
+                transition: width .2s;
+                overflow: hidden
+            }
+
+            nav.closed {
+                width: 0;
+                border-right: 0
+            }
+
+            nav>* {
+                min-width: 240px
+            }
+
+            nav .nh {
+                display: flex;
+                align-items: center;
+                padding: 10px 12px;
+                font-weight: 600;
+                border-bottom: 1px solid var(--line)
+            }
+
+            nav .nh button {
+                margin-left: auto;
+                border: 0;
+                background: transparent;
+                cursor: pointer;
+                font-size: 18px;
+                color: var(--muted)
+            }
+
+            .step {
+                display: flex;
+                gap: 10px;
+                padding: 12px;
+                cursor: pointer;
+                border-bottom: 1px solid var(--line);
+                border-left: 4px solid transparent
+            }
+
+            .step:hover {
+                background: var(--card)
+            }
+
+            .step.on {
+                background: var(--card);
+                border-left-color: var(--accent)
+            }
+
+            .step .n {
+                width: 26px;
+                height: 26px;
+                border-radius: 50%;
+                background: var(--phaseHead);
+                color: var(--phaseHeadInk);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 13px;
+                flex: none
+            }
+
+            .step.done .n {
+                background: var(--ok)
+            }
+
+            .step b {
+                display: block;
+                font-size: 13px
+            }
+
+            .step small {
+                color: var(--muted);
+                font-size: 11.5px
+            }
+
+            aside {
+                width: 380px;
+                background: var(--panel);
+                border-left: 1px solid var(--line);
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                transition: width .2s;
+                overflow: hidden
+            }
+
+            aside.closed {
+                width: 0;
+                border-left: 0
+            }
+
+            aside>* {
+                min-width: 380px
+            }
+
+            .tabs {
+                display: flex;
+                border-bottom: 1px solid var(--line);
+                align-items: center
+            }
+
+            .tabs div {
+                flex: 1;
+                padding: 10px 12px;
+                border-bottom: 3px solid var(--accent);
+                font-weight: 600
+            }
+
+            .tabs button {
+                margin: 0 8px;
+                border: 0;
+                background: transparent;
+                cursor: pointer;
+                font-size: 18px;
+                color: var(--muted)
+            }
+
+            .pane {
+                padding: 14px 16px;
+                overflow: auto;
+                flex: 1
+            }
+
+            .pane h3 {
+                font-size: 14px;
+                margin: 16px 0 6px
+            }
+
+            h2.sec {
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: .06em;
+                color: var(--muted);
+                margin: 4px 0 10px
+            }
+
+            .note {
+                font-size: 12px;
+                color: var(--muted)
+            }
+
+            .phases {
+                display: flex;
+                gap: 12px;
+                overflow-x: auto;
+                padding: 26px 2px 12px;
+                align-items: stretch
+            }
+
+            .gate {
+                border-left: 3px dashed var(--danger);
+                position: relative;
+                margin: 0 2px
+            }
+
+            .gate i {
+                position: absolute;
+                top: -24px;
+                left: -52px;
+                width: 110px;
+                text-align: center;
+                font-size: 11px;
+                font-weight: 700;
+                font-style: normal;
+                color: var(--danger)
+            }
+
+            .ph {
+                min-width: 196px;
+                width: 196px;
+                background: var(--phase);
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                transition: box-shadow .15s,transform .15s
+            }
+
+            .ph:hover {
+                box-shadow: 0 4px 14px rgba(0,0,0,.2);
+                transform: translateY(-2px)
+            }
+
+            .ph .hd {
+                background: var(--phaseHead);
+                color: var(--phaseHeadInk);
+                padding: 8px 10px;
+                font-weight: 600;
+                font-size: 13px;
+                text-align: center;
+                min-height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center
+            }
+
+            .ph.pre .hd {
+                background: var(--edge)
+            }
+
+            .ph .bd {
+                padding: 10px
+            }
+
+            label.f {
+                display: block;
+                font-weight: 600;
+                font-size: 12px;
+                margin: 9px 0 3px;
+                color: var(--muted)
+            }
+
+            .inp {
+                width: 100%;
+                padding: 7px 8px;
+                border: 1px solid var(--line);
+                border-radius: 5px;
+                background: var(--card)
+            }
+
+            textarea.inp {
+                min-height: 58px;
+                resize: vertical
+            }
+
+            .inp:focus,.btn:focus {
+                outline: 2px solid var(--accent);
+                border-color: var(--accent)
+            }
+
+            .big {
+                text-align: center;
+                font-size: 28px;
+                font-weight: 700;
+                color: var(--brand2);
+                line-height: 1.1;
+                margin-top: 8px
+            }
+
+            body.dark .big {
+                color: var(--accent)
+            }
+
+            .ph.pre .big {
+                color: var(--edge)
+            }
+
+            .sm {
+                font-size: 11.5px;
+                color: var(--muted);
+                text-align: center
+            }
+
+            .amber {
+                color: var(--warn);
+                font-weight: 600
+            }
+
+            .red {
+                color: var(--danger);
+                font-weight: 600
+            }
+
+            .green {
+                color: var(--ok);
+                font-weight: 600
+            }
+
+            .chk {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 12px;
+                margin-top: 5px
+            }
+
+            .panelbox {
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                padding: 10px 12px;
+                margin-bottom: 12px
+            }
+
+            .gantt {
+                overflow-x: auto
+            }
+
+            .gantt svg text {
+                fill: var(--ink)
+            }
+
+            .gantt svg .mut {
+                fill: var(--muted)
+            }
+
+            .cards {
+                list-style: none;
+                margin: 0;
+                padding: 0
+            }
+
+            .cards li {
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-left: 5px solid var(--warn);
+                border-radius: 6px;
+                padding: 9px 12px;
+                margin: 8px 0;
+                font-size: 13px;
+                cursor: pointer;
+                display: flex;
+                gap: 12px;
+                align-items: flex-start
+            }
+
+            .cards li:hover {
+                border-color: var(--accent)
+            }
+
+            .cards li.sel {
+                outline: 2px solid var(--accent)
+            }
+
+            .s3 {
+                border-left-color: var(--danger)!important
+            }
+
+            .s2 {
+                border-left-color: #f0a020!important
+            }
+
+            .s1 {
+                border-left-color: var(--ok)!important
+            }
+
+            .cards .tm {
+                width: 92px;
+                flex: none
+            }
+
+            .cards .tm input {
+                width: 100%;
+                text-align: center;
+                font-weight: 700;
+                padding: 5px
+            }
+
+            .cards .tm.miss input {
+                border-color: var(--warn);
+                background: rgba(240,160,32,.12)
+            }
+
+            .cards .tm small {
+                display: block;
+                text-align: center;
+                font-size: 10.5px;
+                color: var(--muted)
+            }
+
+            .cards .t {
+                font-weight: 600
+            }
+
+            .cards .body {
+                flex: 1;
+                min-width: 0
+            }
+
+            .tag {
+                display: inline-block;
+                font-size: 11px;
+                border-radius: 10px;
+                padding: 1px 7px;
+                background: var(--surface);
+                border: 1px solid var(--line);
+                margin: 3px 4px 0 0
+            }
+
+            .row {
+                display: flex;
+                gap: 8px
+            }
+
+            .row>* {
+                flex: 1
+            }
+
+            .hidden {
+                display: none!important
+            }
+
+            .banner {
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                padding: 10px 12px;
+                margin-bottom: 10px;
+                font-size: 13px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px 18px;
+                align-items: center
+            }
+
+            .empty {
+                color: var(--muted);
+                text-align: center;
+                padding: 16px 6px
+            }
+
+            .ex {
+                display: flex;
+                gap: 8px;
+                align-items: flex-start;
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-left: 5px solid var(--danger);
+                border-radius: 6px;
+                padding: 8px 9px;
+                margin: 8px 0
+            }
+
+            .ex>div {
+                flex: 1
+            }
+
+            .cm {
+                display: flex;
+                gap: 16px;
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-left: 5px solid var(--warn);
+                border-radius: 6px;
+                padding: 12px;
+                margin: 10px 0
+            }
+
+            .cm.dis {
+                opacity: .55
+            }
+
+            .cm .ctx {
+                flex: 1;
+                min-width: 0;
+                font-size: 13px
+            }
+
+            .cm .frm {
+                flex: 1.1;
+                min-width: 0
+            }
+
+            .cm h4 {
+                margin: 0 0 4px;
+                font-size: 13px
+            }
+
+            .ctx .k {
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--muted);
+                text-transform: uppercase;
+                margin-top: 6px
+            }
+
+            .seg {
+                display: flex;
+                gap: 6px
+            }
+
+            .seg .btn {
+                flex: 1;
+                text-align: center
+            }
+
+            .pgroup {
+                font-weight: 600;
+                margin: 16px 0 2px;
+                color: var(--muted);
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: .05em
+            }
+
+            table.reg {
+                border-collapse: collapse;
+                width: 100%;
+                font-size: 13px;
+                background: var(--card);
+                border: 1px solid var(--line);
+                margin-bottom: 12px
+            }
+
+            table.reg th {
+                background: var(--surface);
+                text-align: left;
+                padding: 7px 8px;
+                border-bottom: 2px solid var(--line)
+            }
+
+            table.reg td {
+                padding: 7px 8px;
+                border-bottom: 1px solid var(--line);
+                vertical-align: middle
+            }
+
+            .rank {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                background: var(--phaseHead);
+                color: var(--phaseHeadInk);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700
+            }
+
+            .sbar {
+                height: 12px;
+                background: var(--brand2);
+                border-radius: 3px;
+                min-width: 3px
+            }
+
+            .eff {
+                font-size: 12px;
+                font-weight: 600;
+                padding: 2px 10px;
+                border-radius: 10px;
+                border: 1px solid var(--line);
+                background: var(--surface)
+            }
+
+            .kpis {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+                margin-bottom: 12px
+            }
+
+            .kpi {
+                flex: 1;
+                min-width: 170px;
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                padding: 10px 14px
+            }
+
+            .kpi small {
+                color: var(--muted);
+                display: block;
+                font-size: 12px
+            }
+
+            .kpi b {
+                font-size: 22px;
+                color: var(--brand2)
+            }
+
+            body.dark .kpi b {
+                color: var(--accent)
+            }
+
+            #navbtns {
+                position: sticky;
+                bottom: 0;
+                display: flex;
+                justify-content: flex-end;
+                gap: 8px;
+                padding: 12px 0;
+                pointer-events: none
+            }
+
+            #navbtns .btn {
+                pointer-events: auto;
+                box-shadow: 0 2px 8px rgba(0,0,0,.25)
+            }
+
+            .mbg {
+                position: fixed;
+                inset: 0;
+                background: rgba(10,20,30,.55);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 80
+            }
+
+            .mbox {
+                background: var(--panel);
+                border-radius: 10px;
+                width: min(940px,94vw);
+                max-height: 90vh;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 10px 40px rgba(0,0,0,.4)
+            }
+
+            .mbox .mh {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 16px;
+                border-bottom: 1px solid var(--line)
+            }
+
+            .mbox .mh h3 {
+                margin: 0;
+                font-size: 16px;
+                flex: 1
+            }
+
+            .mbox .mh button.x {
+                border: 0;
+                background: transparent;
+                font-size: 22px;
+                cursor: pointer;
+                color: var(--muted)
+            }
+
+            .mbox .mb {
+                overflow: auto;
+                padding: 4px 16px 8px
+            }
+
+            .mbox .mf {
+                display: flex;
+                gap: 8px;
+                padding: 12px 16px;
+                border-top: 1px solid var(--line);
+                align-items: center
+            }
+
+            .welcome {
+                max-width: 620px;
+                margin: 8vh auto 0;
+                text-align: center
+            }
+
+            .welcome h2 {
+                font-size: 22px;
+                margin: 0 0 6px
+            }
+
+            .welcome p {
+                color: var(--muted);
+                margin: 0 0 18px
+            }
+
+            .drop {
+                border: 2px dashed var(--line);
+                border-radius: 12px;
+                padding: 38px 20px;
+                background: var(--card);
+                transition: border-color .15s,background .15s
+            }
+
+            .drop.over {
+                border-color: var(--accent);
+                background: var(--surface)
+            }
+
+            .drop .big2 {
+                font-size: 34px;
+                color: var(--edge)
+            }
+
+            .steps4 {
+                display: flex;
+                gap: 10px;
+                margin-top: 22px;
+                text-align: left
+            }
+
+            .steps4>div {
+                flex: 1;
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                padding: 10px;
+                font-size: 12px;
+                color: var(--muted)
+            }
+
+            .steps4 b {
+                display: block;
+                color: var(--ink);
+                font-size: 13px
+            }
+
+            body.empty .ns,body.empty nav,body.empty aside,body.empty #navbtns {
+                display: none!important
+            }
+
+            #toast {
+                position: fixed;
+                bottom: 18px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #24384d;
+                color: #fff;
+                padding: 9px 16px;
+                border-radius: 6px;
+                opacity: 0;
+                transition: opacity .25s;
+                pointer-events: none;
+                z-index: 99
+            }
+
+            #toast.show {
+                opacity: 1
+            }
+        </style>
+    </head>
+    <body class="empty">
+        <header>
+            <div>
+                <h1>CIS Process Review Workbook</h1>
+                <div class="sub">Part 2 · Lead-time reduction planning</div>
+            </div>
+            <div class="hstats" id="hstats"></div>
+            <button class="iconbtn" id="themeBtn">◐ Theme</button>
+        </header>
+        <div class="toolbar">
+            <button class="btn ns" id="navBtn">☰ Steps</button>
+            <span class="sep ns"></span>
+            <button class="btn" onclick="document.getElementById('file').click()">Import workbook</button>
+            <button class="btn primary ns" onclick="exportJson()">Export</button>
+            <button class="btn danger ns" onclick="clearAll()">Clear &amp; start over</button>
+            <span class="sep ns"></span>
+            <label class="note ns">PREIMP arrival</label>
+            <input class="ns" type="date" id="arrival">
+            <span class="spacer"></span>
+            <button class="btn ns" id="asideBtn">Hide panel ▶</button>
+            <span class="pill ns">
+                Post-arrival possible saving: <b id="kPost">0 d</b>
+            </span>
+            <span class="pill ns">
+                Pre-arrival slack: <b id="kPre">0 d</b>
+            </span>
+            <span class="pill warn ns">
+                Missing time: <b id="kMiss">0</b>
+            </span>
+            <input type="file" id="file" accept=".json" class="hidden">
+        </div>
+        <div class="main">
+            <nav id="nav">
+                <div class="nh">
+                    Steps<button onclick="setNav(false)" title="Hide">&times;</button>
+                </div>
+                <div id="steps"></div>
+            </nav>
+            <div id="wrap">
+                <div id="view"></div>
+                <div id="navbtns">
+                    <button class="btn" id="bBack">&larr; Back</button>
+                    <button class="btn primary" id="bNext">Next &rarr;</button>
+                </div>
+            </div>
+            <aside>
+                <div class="tabs">
+                    <div id="aTitle">Calendar settings</div>
+                    <button onclick="setAside(false)">&times;</button>
+                </div>
+                <div class="pane" id="pane"></div>
+            </aside>
+        </div>
+        <div id="modal"></div>
+        <div id="toast"></div>
+        <script>
+            const ORDER = ["Pre-CRA Data", "After CRA Data", "APIM Production (T1FF+)", "Prep for Income Processing", "Income Processing", "Imputation Part 1", "Post Income DVs", "Weights", "Final Steps"];
+            const ALIAS = {
+                "During Income Processing": "Income Processing"
+            };
+            const CATS = ["Manual effort", "Bottleneck / wait time", "System / tool limitation", "Rework / handoff", "Data quality", "Other"];
+            const STAT = ["New", "Reviewed", "Grouped", "Countermeasure defined", "Parked"];
+            const DEF = {
+                "APIM Production (T1FF+)": ["2026-11-16", "2026-12-14"],
+                "Prep for Income Processing": ["2026-12-01", "2026-12-14"],
+                "Income Processing": ["2026-12-14", "2027-02-05"],
+                "Imputation Part 1": ["2026-12-14", "2027-02-05"],
+                "Post Income DVs": ["2027-02-05", "2027-02-19"],
+                "Weights": ["2027-02-15", "2027-02-26"],
+                "Final Steps": ["2027-03-01", "2027-05-03"]
+            };
+            const STEPS = [["Phases & pain points", "Add times, dates, edit"], ["Countermeasures", "Propose a fix per pain point"], ["Prioritize", "Ranked by time saved and effort"], ["Before & after", "New timeline and plan"]];
+            const EW = {
+                S: 1,
+                M: 2,
+                L: 3
+            }
+              , EN = {
+                S: "Small",
+                M: "Medium",
+                L: "Large"
+            };
+            let S = null
+              , cur = null
+              , sel = null
+              , step = 0
+              , onlyOpen = false
+              , pm = null;
+            const $ = id => document.getElementById(id);
+            const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;"
+            }[c]));
+            const pd = s => {
+                if (!s)
+                    return null;
+                const [a,b,c] = s.split("-").map(Number);
+                return Date.UTC(a, b - 1, c)
+            }
+            ;
+            const fd = t => new Date(t).toISOString().slice(0, 10);
+            const DAY = 864e5;
+            function toast(m) {
+                const t = $("toast");
+                t.textContent = m;
+                t.classList.add("show");
+                setTimeout( () => t.classList.remove("show"), 1800)
+            }
+            function isMile(it) {
+                const t = it.description || "";
+                return !it.timeVal && /(start|end|arrives|mid |early|week after|begin)/i.test(t) && t.length < 110 && !/concurrently/i.test(t)
+            }
+            function build(raw) {
+                const seen = [];
+                (raw.items || []).forEach(it => {
+                    const ph = ALIAS[it.phase] || it.phase;
+                    if (ph && !seen.includes(ph))
+                        seen.push(ph)
+                }
+                );
+                const names = [...ORDER.filter(n => seen.includes(n)), ...seen.filter(n => !ORDER.includes(n))];
+                const phases = names.map(n => ({
+                    name: n,
+                    start: (DEF[n] || ["", ""])[0],
+                    end: (DEF[n] || ["", ""])[1],
+                    parallel: n === "Imputation Part 1",
+                    pre: n === "Pre-CRA Data" || n === "After CRA Data"
+                }));
+                const items = []
+                  , ms = [];
+                (raw.items || []).forEach( (it, i) => {
+                    const ph = ALIAS[it.phase] || it.phase;
+                    const o = {
+                        id: it.id || ("n" + i),
+                        phase: ph,
+                        step: it.step === "Map pin" ? "" : (it.step || ""),
+                        category: it.category || "Other",
+                        severity: it.severity || 2,
+                        status: it.status || "New",
+                        description: it.description || "",
+                        cause: it.cause || "",
+                        idea: it.idea || "",
+                        days: (it.timeVal === "" || it.timeVal == null) ? null : Number(it.timeVal),
+                        overlap: false,
+                        notes: "",
+                        cmTitle: "",
+                        cmDesc: "",
+                        cmDays: null,
+                        cmEffort: "",
+                        decision: ""
+                    };
+                    (isMile(it) ? ms : items).push(o)
+                }
+                );
+                return {
+                    arrival: "2026-11-16",
+                    holidays: ["2026-12-25", "2026-12-28", "2027-01-01", "2027-02-15", "2027-03-26"],
+                    exclusions: [],
+                    sortBy: "value",
+                    phases,
+                    items,
+                    milestones: ms
+                };
+            }
+            function norm() {
+                S.exclusions = S.exclusions || [];
+                S.milestones = S.milestones || [];
+                S.sortBy = S.sortBy || "value";
+                S.items.forEach(i => {
+                    if (i.cmTitle == null)
+                        Object.assign(i, {
+                            cmTitle: "",
+                            cmDesc: "",
+                            cmDays: null,
+                            cmEffort: "",
+                            decision: ""
+                        })
+                }
+                )
+            }
+            function load(raw) {
+                if (raw.type === "cis-part2-state" && raw.state && raw.state.phases)
+                    S = raw.state;
+                else if (Array.isArray(raw.items))
+                    S = build(raw);
+                else
+                    throw new Error("This doesn't look like a CIS workbook file.");
+                norm();
+                save();
+                pm = null;
+                go(0)
+            }
+            function save() {
+                try {
+                    localStorage.setItem("cisPart2", JSON.stringify(S))
+                } catch (e) {}
+            }
+            function clearAll() {
+                if (confirm("Clear everything and return to the blank start screen? Export first if you want to keep your work.")) {
+                    S = null;
+                    pm = null;
+                    cur = null;
+                    try {
+                        localStorage.removeItem("cisPart2")
+                    } catch (e) {}
+                    ;$("modal").innerHTML = "";
+                    render()
+                }
+            }
+            function isWork(t, h, ex) {
+                const w = new Date(t).getUTCDay();
+                return w !== 0 && w !== 6 && !h.has(t) && !ex.some(r => t >= r[0] && t <= r[1])
+            }
+            function cal() {
+                return [new Set(S.holidays.map(pd)), S.exclusions.map(x => [pd(x.start), pd(x.end || x.start)]).filter(r => r[0] != null && r[1] != null)]
+            }
+            function workdays(a, b) {
+                const s = typeof a === "number" ? a : pd(a)
+                  , e = typeof b === "number" ? b : pd(b);
+                if (s == null || e == null || e < s)
+                    return 0;
+                const [h,ex] = cal();
+                let n = 0;
+                for (let t = s; t <= e; t += DAY)
+                    if (isWork(t, h, ex))
+                        n++;
+                return n
+            }
+            function wdOrNull(a, b) {
+                return (pd(a) == null || pd(b) == null || pd(b) < pd(a)) ? null : workdays(a, b)
+            }
+            function stepBack(end, n) {
+                const [h,ex] = cal();
+                let t = end
+                  , r = n;
+                while (r > 0) {
+                    if (isWork(t, h, ex))
+                        r--;
+                    t -= DAY
+                }
+                while (!isWork(t, h, ex) && t > end - 800 * DAY)
+                    t -= DAY;
+                return t
+            }
+            function stats(p) {
+                const its = S.items.filter(i => i.phase === p.name)
+                  , miss = its.filter(i => i.days == null).length;
+                const sum = its.reduce( (a, i) => a + (i.days || 0), 0)
+                  , wd = wdOrNull(p.start, p.end);
+                return {
+                    its,
+                    miss,
+                    sum,
+                    wd,
+                    eff: wd != null ? Math.min(sum, wd) : sum,
+                    capped: wd != null && sum > wd
+                }
+            }
+            function totals() {
+                let post = 0
+                  , pre = 0
+                  , miss = 0
+                  , tot = 0;
+                S.phases.forEach(p => {
+                    const st = stats(p);
+                    miss += st.miss;
+                    tot += st.its.length;
+                    if (p.pre)
+                        pre += st.eff;
+                    else if (!p.parallel)
+                        post += st.eff
+                }
+                );
+                return {
+                    post,
+                    pre,
+                    miss,
+                    tot
+                }
+            }
+            function cms() {
+                return S.items.filter(i => i.cmTitle && i.cmDays != null && i.cmEffort && i.decision !== "no")
+            }
+            function go(n) {
+                step = Math.max(0, Math.min(3, n));
+                cur = null;
+                sel = null;
+                try {
+                    localStorage.setItem("cisStep", step)
+                } catch (e) {}
+                ;render()
+            }
+            function readFile(f) {
+                if (!f)
+                    return;
+                f.text().then(t => {
+                    try {
+                        load(JSON.parse(t));
+                        toast("Workbook imported")
+                    } catch (x) {
+                        alert("Could not read file: " + x.message)
+                    }
+                }
+                )
+            }
+            function empty() {
+                let has = false;
+                try {
+                    has = !!JSON.parse(localStorage.getItem("cisPart2") || "null")
+                } catch (e) {}
+                $("view").innerHTML = `<div class="welcome"><h2>Lead-time reduction planning</h2><p>Import your facilitator workbook to build the phase overview, pain points and countermeasure plan.</p>
+ <div class="drop" id="drop"><div class="big2">⇪</div><p style="margin:8px 0 14px">Drag your workbook (.json) here</p><button class="btn primary" onclick="document.getElementById('file').click()">Choose workbook file</button>${has ? '<div style="margin-top:12px"><button class="btn" onclick="resume()">Continue previous session</button></div>' : ""}</div>
+ <div class="steps4"><div><b>1 · Phases</b>Dates, times, pain points</div><div><b>2 · Countermeasures</b>One fix per pain point</div><div><b>3 · Prioritize</b>Ranked by time and effort</div><div><b>4 · Before &amp; after</b>New timeline and plan</div></div></div>`;
+                const d = $("drop");
+                ["dragenter", "dragover"].forEach(e => d.addEventListener(e, ev => {
+                    ev.preventDefault();
+                    d.classList.add("over")
+                }
+                ));
+                ["dragleave", "drop"].forEach(e => d.addEventListener(e, ev => {
+                    ev.preventDefault();
+                    d.classList.remove("over")
+                }
+                ));
+                d.addEventListener("drop", ev => readFile(ev.dataTransfer.files[0]));
+            }
+            function resume() {
+                try {
+                    S = JSON.parse(localStorage.getItem("cisPart2"));
+                    norm();
+                    step = Number(localStorage.getItem("cisStep")) || 0;
+                    render()
+                } catch (e) {
+                    S = null;
+                    alert("Could not restore the previous session.")
+                }
+            }
+            window.addEventListener("dragover", e => e.preventDefault());
+            window.addEventListener("drop", e => {
+                e.preventDefault();
+                if (!e.target.closest || !e.target.closest("#drop"))
+                    readFile(e.dataTransfer.files[0])
+            }
+            );
+            function render() {
+                if (!S) {
+                    document.body.classList.add("empty");
+                    $("hstats").textContent = "";
+                    empty();
+                    return
+                }
+                document.body.classList.remove("empty");
+                $("arrival").value = S.arrival;
+                const T = totals();
+                $("kPost").textContent = T.post + " d";
+                $("kPre").textContent = T.pre + " d";
+                $("kMiss").textContent = T.miss;
+                $("hstats").textContent = T.tot + " pain points";
+                const prop = S.items.filter(i => i.cmTitle).length
+                  , dis = S.items.filter(i => i.decision === "no").length
+                  , c = cms()
+                  , dec = c.filter(i => i.decision === "go").length
+                  , goN = dec;
+                const stat = [T.miss ? T.miss + " missing time" : "Complete", prop + " proposed · " + dis + " not worth it", dec + " of " + c.length + " going ahead", goN + " going ahead"];
+                const done = [T.miss === 0 && T.tot > 0, T.tot > 0 && S.items.every(i => i.cmTitle || i.decision === "no"), c.length > 0 && c.every(i => i.decision), goN > 0];
+                $("steps").innerHTML = STEPS.map( (s, i) => `<div class="step ${i === step ? "on" : ""} ${done[i] ? "done" : ""}" onclick="go(${i})"><div class="n">${done[i] ? "✓" : i + 1}</div><div><b>${s[0]}</b><small>${s[1]}</small><br><small class="${done[i] ? "green" : "amber"}">${stat[i]}</small></div></div>`).join("");
+                $("bBack").classList.toggle("hidden", step === 0);
+                $("bNext").classList.toggle("hidden", step === 3);
+                $("asideBtn").classList.toggle("hidden", step !== 0);
+                document.querySelector("aside").classList.toggle("hidden", step !== 0);
+                [v1, v2, v3, v4][step]();
+            }
+            function setP(i, k, v) {
+                S.phases[i][k] = v;
+                save();
+                render()
+            }
+            function phaseCards() {
+                let cards = []
+                  , gateDone = false;
+                S.phases.forEach( (p, idx) => {
+                    const st = stats(p);
+                    if (!p.pre && !gateDone) {
+                        gateDone = true;
+                        cards.push('<div class="gate"><i>PREIMP arrival<br>' + esc(S.arrival) + '</i></div>')
+                    }
+                    cards.push(`<div class="ph ${p.pre ? "pre" : ""}" onclick="openPhase(${idx})"><div class="hd">${esc(p.name)}</div><div class="bd">
+  <label class="f">Start</label><input class="inp" type="date" value="${p.start}" onclick="event.stopPropagation()" onchange="setP(${idx},'start',this.value)">
+  <label class="f">End</label><input class="inp" type="date" value="${p.end}" onclick="event.stopPropagation()" onchange="setP(${idx},'end',this.value)">
+  <div class="sm" style="margin-top:8px">Workdays: <b>${st.wd == null ? "-" : st.wd}</b></div>
+  <div class="big">${st.eff} d</div><div class="sm">potential reduction${st.capped ? ' <span class="red">(capped, raw ' + st.sum + ')</span>' : ""}</div>
+  <div class="sm">${st.its.length} pain point(s)${st.miss ? ' · <span class="amber">' + st.miss + ' missing time</span>' : ""}</div>
+  <div onclick="event.stopPropagation()"><label class="chk"><input type="checkbox" ${p.parallel ? "checked" : ""} onchange="setP(${idx},'parallel',this.checked)"> Runs in parallel</label>
+  <label class="chk"><input type="checkbox" ${p.pre ? "checked" : ""} onchange="setP(${idx},'pre',this.checked)"> Before arrival</label></div></div></div>`)
+                }
+                );
+                return cards.join("");
+            }
+            function v1() {
+                if (cur != null)
+                    return vDetail();
+                $("view").innerHTML = `<h2 class="sec">Phases · click a card to open its pain points</h2><div class="phases">${phaseCards()}</div>
+ <h2 class="sec" style="margin-top:14px">Timeline</h2><div class="panelbox gantt">${ganttSVG(S.phases.map(p => ({
+                    name: p.name,
+                    start: p.start,
+                    end: p.end,
+                    parallel: p.parallel,
+                    pre: p.pre,
+                    label: lbl(p)
+                })), true)}</div>
+ <div class="note">Driven by the phase cards. Grey dashed bars run in parallel. Red shading marks special exclusions. Prefilled dates are estimates, so edit them.</div>`;
+                $("aTitle").textContent = "Calendar settings";
+                if (!document.activeElement || !document.activeElement.closest || !document.activeElement.closest("#pane"))
+                    overPane();
+            }
+            function lbl(p) {
+                const st = stats(p);
+                return (st.wd == null ? "" : st.wd + " wd") + (st.eff ? " · -" + st.eff + " d possible" : "")
+            }
+            function ganttSVG(rows, showEx, ghost, rng) {
+                const ok = r => pd(r.start) != null && pd(r.end) != null && pd(r.end) >= pd(r.start);
+                const ph = rows.filter(ok)
+                  , nod = rows.filter(r => !ok(r));
+                if (!ph.length)
+                    return '<div class="empty">Set phase start and end dates to see the timeline.</div>';
+                let mn = Math.min(...ph.map(p => pd(p.start)), ...(ghost ? ph.map(p => pd(p.gs)) : []), pd(S.arrival))
+                  , mx = Math.max(...ph.map(p => pd(p.end)), ...(ghost ? ph.map(p => pd(p.ge)) : []));
+                if (rng) {
+                    mn = Math.min(mn, rng[0]);
+                    mx = Math.max(mx, rng[1])
+                }
+                const d0 = new Date(mn);
+                mn = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), 1);
+                const d1 = new Date(mx);
+                mx = Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth() + 1, 1);
+                const L = 190
+                  , W = 980
+                  , RH = 30
+                  , H = ph.length * RH + 40
+                  , x = t => L + (t - mn) / (mx - mn) * W;
+                let s = `<svg width="${L + W + 20}" height="${H}" font-size="12">`;
+                let m = new Date(mn);
+                while (m.getTime() < mx) {
+                    const t = m.getTime();
+                    s += `<line x1="${x(t)}" x2="${x(t)}" y1="22" y2="${H}" stroke="var(--line)"/><text class="mut" x="${x(t) + 4}" y="15">${m.toLocaleString("en", {
+                        month: "short",
+                        year: "numeric",
+                        timeZone: "UTC"
+                    })}</text>`;
+                    m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1))
+                }
+                if (showEx)
+                    S.exclusions.forEach(q => {
+                        const a0 = pd(q.start)
+                          , b0 = pd(q.end || q.start);
+                        if (a0 == null || b0 == null || b0 < a0 || b0 < mn || a0 > mx)
+                            return;
+                        const a = x(Math.max(a0, mn))
+                          , b = x(Math.min(b0, mx) + DAY);
+                        s += `<rect x="${a}" y="22" width="${Math.max(b - a, 3)}" height="${H - 22}" fill="var(--danger)" opacity=".16"/><text x="${a + 2}" y="${H - 4}" style="fill:var(--danger)" font-size="10">${esc(q.label || "Excluded")}</text>`
+                    }
+                    );
+                ph.forEach( (p, i) => {
+                    const y = 30 + i * RH
+                      , a = x(pd(p.start))
+                      , b = x(pd(p.end) + DAY);
+                    const col = (p.parallel || p.pre) ? "var(--edge)" : (p.changed ? "var(--ok)" : "var(--phaseHead)");
+                    s += `<text x="${L - 8}" y="${y + 14}" text-anchor="end">${esc(p.name)}</text>`;
+                    if (ghost)
+                        s += `<rect x="${x(pd(p.gs))}" y="${y - 2}" width="${Math.max(x(pd(p.ge) + DAY) - x(pd(p.gs)), 3)}" height="24" rx="4" fill="none" stroke="var(--edge)" stroke-dasharray="4 3"/>`;
+                    s += `<rect x="${a}" y="${y}" width="${Math.max(b - a, 3)}" height="20" rx="4" fill="${col}" ${p.parallel ? 'opacity=".6" stroke="var(--edge)" stroke-dasharray="4 3"' : ""}/><text x="${a + 6}" y="${y + 14}" style="fill:#fff" font-size="11">${esc(p.label || "")}</text>`
+                }
+                );
+                const ax = x(pd(S.arrival));
+                s += `<line x1="${ax}" x2="${ax}" y1="20" y2="${H}" stroke="var(--danger)" stroke-width="2" stroke-dasharray="5 4"/><text x="${ax + 4}" y="${H - 4}" style="fill:var(--danger)" font-size="11">PREIMP arrival</text></svg>`;
+                if (nod.length)
+                    s += '<div class="note" style="padding:4px 8px">No dates yet: ' + nod.map(p => esc(p.name)).join(", ") + "</div>";
+                return s;
+            }
+            function overPane() {
+                $("pane").innerHTML = `<h3 style="margin-top:0">Holidays excluded from workdays</h3><input class="inp" id="hol" value="${esc(S.holidays.join(", "))}"><div class="note">YYYY-MM-DD, comma separated.</div>
+ <h3>Special exclusions</h3><div class="note">Periods when the process can't run. They are removed from workdays and shaded on the timeline.</div>
+ ${S.exclusions.length ? S.exclusions.map( (q, i) => `<div class="ex"><div><input class="inp" placeholder="Label (e.g. Audit week)" value="${esc(q.label)}" onchange="exSet(${i},'label',this.value)"><div class="row" style="margin-top:5px"><input class="inp" type="date" value="${q.start || ""}" onchange="exSet(${i},'start',this.value)"><input class="inp" type="date" value="${q.end || ""}" onchange="exSet(${i},'end',this.value)"></div></div><button class="btn sm danger" onclick="exDel(${i})">Remove</button></div>`).join("") : '<div class="empty">None added</div>'}
+ <button class="btn" onclick="exAdd()">+ Add exclusion</button>`;
+                $("hol").onchange = e => {
+                    S.holidays = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
+                    save();
+                    render()
+                }
+                ;
+            }
+            function exAdd() {
+                S.exclusions.push({
+                    label: "",
+                    start: "",
+                    end: ""
+                });
+                save();
+                $("pane").innerHTML = "";
+                render()
+            }
+            function exSet(i, k, v) {
+                S.exclusions[i][k] = v;
+                if (k === "start" && !S.exclusions[i].end)
+                    S.exclusions[i].end = v;
+                save();
+                $("pane").innerHTML = "";
+                render()
+            }
+            function exDel(i) {
+                S.exclusions.splice(i, 1);
+                save();
+                $("pane").innerHTML = "";
+                render()
+            }
+            function setAside(o) {
+                document.querySelector("aside").classList.toggle("closed", !o);
+                $("asideBtn").textContent = o ? "Hide panel ▶" : "◀ Show panel";
+                try {
+                    localStorage.setItem("cisAside", o ? "1" : "0")
+                } catch (e) {}
+            }
+            function setNav(o) {
+                $("nav").classList.toggle("closed", !o);
+                try {
+                    localStorage.setItem("cisNav", o ? "1" : "0")
+                } catch (e) {}
+            }
+            $("asideBtn").onclick = () => setAside(document.querySelector("aside").classList.contains("closed"));
+            $("navBtn").onclick = () => setNav($("nav").classList.contains("closed"));
+            $("bNext").onclick = () => go(step + 1);
+            $("bBack").onclick = () => go(step - 1);
+            function openPhase(i) {
+                cur = i;
+                sel = null;
+                render()
+            }
+            function closeDetail() {
+                cur = null;
+                sel = null;
+                $("pane").innerHTML = "";
+                render()
+            }
+            function vDetail() {
+                const p = S.phases[cur]
+                  , st = stats(p);
+                const its = [...st.its].sort( (a, b) => (a.days == null ? 0 : 1) - (b.days == null ? 0 : 1));
+                $("view").innerHTML = `<div class="row" style="align-items:center;margin-bottom:10px"><div style="flex:none"><button class="btn" onclick="closeDetail()">&larr; All phases</button></div><h2 style="margin:0 0 0 8px;font-size:18px;flex:1">${esc(p.name)}</h2><div style="flex:none"><button class="btn primary" onclick="addPP()">+ Add pain point</button></div></div>
+ <div class="banner"><span class="pill">${p.pre ? "Before arrival: creates slack only" : p.parallel ? "Runs in parallel" : "After arrival: shortens end date"}</span><span>${esc(p.start || "no start")} to ${esc(p.end || "no end")}</span><span>Workdays: <b>${st.wd == null ? "-" : st.wd}</b></span><span>Pain-point days: <b>${st.sum}</b>${st.capped ? ' <span class="red">exceeds phase, capped at ' + st.wd + "</span>" : ""}</span><span>Missing time: <b class="${st.miss ? "amber" : ""}">${st.miss}</b></span></div>
+ <div class="note">Click a pain point to see it and propose a countermeasure.</div>
+ <ul class="cards">${its.length ? its.map(i => `<li class="s${i.severity} ${i.id === sel ? "sel" : ""}" onclick="openPM('${i.id}')"><div class="tm ${i.days == null ? "miss" : ""}" onclick="event.stopPropagation()"><input class="inp" type="number" min="0" step="0.5" value="${i.days == null ? "" : i.days}" placeholder="add" onchange="qt('${i.id}',this.value)"><small>workdays</small></div>
+ <div class="body"><div class="t">${esc(i.step || "(no step)")}</div><div>${esc(i.description.slice(0, 160))}</div><div><span class="tag">${esc(i.category)}</span><span class="tag">Severity ${i.severity}</span>${i.cmTitle ? '<span class="tag">Countermeasure: ' + esc(i.cmTitle) + (i.cmDays != null ? " (" + i.cmDays + " d)" : "") + "</span>" : '<span class="tag">No countermeasure yet</span>'}${i.decision === "no" ? '<span class="tag">Not worth it</span>' : ""}</div></div></li>`).join("") : '<div class="empty">No pain points in this phase.</div>'}</ul>`;
+                $("aTitle").textContent = "Edit pain point details";
+                const it = S.items.find(i => i.id === sel);
+                if (!it) {
+                    $("pane").innerHTML = '<div class="empty">Open a pain point and choose "Edit pain point details" to change its text here.</div>';
+                    return
+                }
+                const opt = (a, v) => a.map(x => `<option ${x == v ? "selected" : ""}>${esc(x)}</option>`).join("");
+                $("pane").innerHTML = `<label class="f" style="margin-top:0">Step</label><input class="inp" id="f_step" value="${esc(it.step)}">
+ <label class="f">Description</label><textarea class="inp" id="f_desc">${esc(it.description)}</textarea>
+ <label class="f">Cause</label><textarea class="inp" id="f_cause">${esc(it.cause)}</textarea>
+ <label class="f">Idea</label><textarea class="inp" id="f_idea">${esc(it.idea)}</textarea>
+ <div class="row"><div><label class="f">Lead time (workdays)</label><input class="inp" id="f_days" type="number" min="0" step="0.5" value="${it.days == null ? "" : it.days}"></div><div><label class="f">Severity (1-3)</label><select class="inp" id="f_sev">${opt([1, 2, 3], it.severity)}</select></div></div>
+ <div class="row"><div><label class="f">Category</label><select class="inp" id="f_cat">${opt(CATS, it.category)}</select></div><div><label class="f">Status</label><select class="inp" id="f_stat">${opt(STAT, it.status)}</select></div></div>
+ <label class="f">Phase</label><select class="inp" id="f_phase">${S.phases.map(q => `<option ${q.name === it.phase ? "selected" : ""}>${esc(q.name)}</option>`).join("")}</select>
+ <label class="chk"><input type="checkbox" id="f_ov" ${it.overlap ? "checked" : ""}> Overlaps / runs in parallel with other items</label>
+ <label class="f">Notes</label><textarea class="inp" id="f_notes">${esc(it.notes)}</textarea>
+ <div class="row" style="margin-top:14px"><button class="btn primary" onclick="savePP()">Save</button><button class="btn danger" onclick="delPP()">Delete</button></div>`;
+            }
+            function qt(id, v) {
+                const it = S.items.find(i => i.id === id);
+                it.days = v === "" ? null : Number(v);
+                save();
+                render()
+            }
+            function savePP() {
+                const it = S.items.find(i => i.id === sel);
+                Object.assign(it, {
+                    step: $("f_step").value,
+                    description: $("f_desc").value,
+                    cause: $("f_cause").value,
+                    idea: $("f_idea").value,
+                    days: $("f_days").value === "" ? null : Number($("f_days").value),
+                    category: $("f_cat").value,
+                    severity: Number($("f_sev").value),
+                    status: $("f_stat").value,
+                    phase: $("f_phase").value,
+                    overlap: $("f_ov").checked,
+                    notes: $("f_notes").value
+                });
+                save();
+                toast("Saved");
+                if (it.phase !== S.phases[cur].name)
+                    sel = null;
+                render()
+            }
+            function addPP() {
+                const id = "n" + Date.now();
+                S.items.push({
+                    id,
+                    phase: S.phases[cur].name,
+                    step: "",
+                    category: "Manual effort",
+                    severity: 2,
+                    status: "New",
+                    description: "New pain point",
+                    cause: "",
+                    idea: "",
+                    days: null,
+                    overlap: false,
+                    notes: "",
+                    cmTitle: "",
+                    cmDesc: "",
+                    cmDays: null,
+                    cmEffort: "",
+                    decision: ""
+                });
+                sel = id;
+                save();
+                render()
+            }
+            function delPP() {
+                if (!confirm("Delete this pain point?"))
+                    return;
+                S.items = S.items.filter(i => i.id !== sel);
+                sel = null;
+                save();
+                render()
+            }
+            function openPM(id) {
+                pm = id;
+                modal()
+            }
+            function closePM() {
+                pm = null;
+                $("modal").innerHTML = "";
+                render()
+            }
+            function editDetails() {
+                sel = pm;
+                pm = null;
+                $("modal").innerHTML = "";
+                setAside(true);
+                render()
+            }
+            function mset(k, v) {
+                const it = S.items.find(i => i.id === pm);
+                it[k] = v;
+                save();
+                render()
+            }
+            function mbtn(k, v) {
+                mset(k, v);
+                modal()
+            }
+            function mdis() {
+                const it = S.items.find(i => i.id === pm);
+                it.decision = it.decision === "no" ? "" : "no";
+                save();
+                toast(it.decision === "no" ? "Marked not worth it" : "Restored");
+                closePM()
+            }
+            function modal() {
+                const i = S.items.find(x => x.id === pm);
+                if (!i) {
+                    $("modal").innerHTML = "";
+                    return
+                }
+                const over = i.cmDays != null && i.days != null && i.cmDays > i.days;
+                $("modal").innerHTML = `<div class="mbg" onclick="if(event.target===this)closePM()"><div class="mbox"><div class="mh"><h3>${esc(i.step || "Pain point")} <span class="tag">${esc(i.phase)}</span></h3><button class="x" onclick="closePM()">&times;</button></div>
+ <div class="mb"><div class="cm s${i.severity} ${i.decision === "no" ? "dis" : ""}"><div class="ctx"><h4>What's happening</h4><span class="tag">${esc(i.category)}</span><span class="tag">Severity ${i.severity}</span>
+ <div class="k">Pain point</div>${esc(i.description) || "-"}<div class="k">Cause</div>${esc(i.cause) || "-"}<div class="k">Idea from workshop</div>${esc(i.idea) || "-"}
+ <label class="f">Lead time of this pain point (workdays)</label><input class="inp" style="width:140px" type="number" min="0" step="0.5" value="${i.days == null ? "" : i.days}" onchange="mset('days',this.value===''?null:Number(this.value))"></div>
+ <div class="frm"><label class="f" style="margin-top:0">Countermeasure proposal</label><input class="inp" placeholder="Title" value="${esc(i.cmTitle)}" onchange="mset('cmTitle',this.value)">
+ <textarea class="inp" style="margin-top:6px;min-height:90px" placeholder="What would we do?" onchange="mset('cmDesc',this.value)">${esc(i.cmDesc)}</textarea>
+ <div class="row"><div><label class="f">Workdays we could save</label><input class="inp" type="number" min="0" step="0.5" value="${i.cmDays == null ? "" : i.cmDays}" onchange="mset('cmDays',this.value===''?null:Number(this.value));modal()">${over ? '<div class="note red">More than the pain point (' + i.days + ' d)</div>' : ""}</div>
+ <div><label class="f">Effort / cost</label><div class="seg">${["S", "M", "L"].map(e => `<button class="btn ${i.cmEffort === e ? "on" : ""}" onclick="mbtn('cmEffort','${i.cmEffort === e ? "" : e}')">${EN[e]}</button>`).join("")}</div></div></div></div></div></div>
+ <div class="mf"><button class="btn" onclick="editDetails()">Edit pain point details</button><span class="spacer"></span><button class="btn danger ${i.decision === "no" ? "on" : ""}" onclick="mdis()">${i.decision === "no" ? "Restore (was not worth it)" : "Not worth it"}</button><button class="btn primary" onclick="closePM()">Done</button></div></div></div>`;
+            }
+            function v2() {
+                const groups = S.phases.map(p => ({
+                    p,
+                    its: S.items.filter(i => i.phase === p.name && (!onlyOpen || (!i.cmTitle && i.decision !== "no")))
+                })).filter(g => g.its.length);
+                const n = S.items.filter(i => i.cmTitle).length;
+                $("view").innerHTML = `<div class="banner"><b>${n} of ${S.items.length}</b> pain points have a countermeasure<label class="chk" style="margin:0 0 0 auto"><input type="checkbox" ${onlyOpen ? "checked" : ""} onchange="onlyOpen=this.checked;render()"> Only show pain points still to do</label></div>
+ <div class="note">One countermeasure per pain point. Time saved is in workdays of lead time. Use "Not worth it" to set one aside quickly. You can restore it later.</div>` + (groups.length ? groups.map(g => `<div class="pgroup">${esc(g.p.name)} ${g.p.pre ? "(before arrival)" : ""}</div>` + g.its.map(i => cmCard(i)).join("")).join("") : '<div class="empty">Nothing to show.</div>');
+            }
+            function cmCard(i) {
+                const over = i.cmDays != null && i.days != null && i.cmDays > i.days;
+                return `<div class="cm s${i.severity} ${i.decision === "no" ? "dis" : ""}"><div class="ctx"><h4>${esc(i.step || "(no step)")} <span class="tag">${esc(i.category)}</span></h4>
+ <div class="k">Pain point</div>${esc(i.description) || "-"}<div class="k">Cause</div>${esc(i.cause) || "-"}<div class="k">Idea from workshop</div>${esc(i.idea) || "-"}
+ <div class="k">Lead time of pain point</div><b>${i.days == null ? '<span class="amber">not set</span>' : i.days + " workdays"}</b></div>
+ <div class="frm"><label class="f" style="margin-top:0">Countermeasure proposal</label><input class="inp" placeholder="Title" value="${esc(i.cmTitle)}" onchange="cmSet('${i.id}','cmTitle',this.value)">
+ <textarea class="inp" style="margin-top:6px" placeholder="What would we do?" onchange="cmSet('${i.id}','cmDesc',this.value)">${esc(i.cmDesc)}</textarea>
+ <div class="row"><div><label class="f">Workdays saved</label><input class="inp" type="number" min="0" step="0.5" value="${i.cmDays == null ? "" : i.cmDays}" onchange="cmSet('${i.id}','cmDays',this.value===''?null:Number(this.value))">${over ? '<div class="note red">More than the pain point (' + i.days + ' d)</div>' : ""}</div>
+ <div><label class="f">Effort / cost</label><div class="seg">${["S", "M", "L"].map(e => `<button class="btn ${i.cmEffort === e ? "on" : ""}" onclick="cmSet('${i.id}','cmEffort','${i.cmEffort === e ? "" : e}')">${EN[e]}</button>`).join("")}</div></div></div>
+ <div class="row" style="margin-top:10px"><button class="btn sm danger ${i.decision === "no" ? "on" : ""}" style="flex:none" onclick="cmSet('${i.id}','decision','${i.decision === "no" ? "" : "no"}')">${i.decision === "no" ? "Restore" : "Not worth it"}</button></div></div></div>`;
+            }
+            function cmSet(id, k, v) {
+                const it = S.items.find(i => i.id === id);
+                it[k] = v;
+                save();
+                const y = $("wrap").scrollTop;
+                render();
+                $("wrap").scrollTop = y
+            }
+            function ranked() {
+                const c = cms().map(i => ({
+                    i,
+                    r: i.cmDays / EW[i.cmEffort]
+                }));
+                return S.sortBy === "time" ? c.sort( (a, b) => b.i.cmDays - a.i.cmDays || EW[a.i.cmEffort] - EW[b.i.cmEffort]) : c.sort( (a, b) => b.r - a.r || b.i.cmDays - a.i.cmDays)
+            }
+            function v3() {
+                const c = ranked()
+                  , mx = Math.max(1, ...c.map(x => x.i.cmDays))
+                  , off = S.items.filter(i => i.decision === "no");
+                $("view").innerHTML = `<div class="banner"><span>${S.sortBy === "time" ? "Ranked by <b>most time saved</b>, then lowest effort / cost." : "Ranked by <b>time saved for the effort / cost</b> (Small = 1, Medium = 2, Large = 3). A Small fix saving 4 days ranks above a Large fix saving 6."}</span>
+ <span class="seg" style="margin-left:auto;min-width:300px"><button class="btn sm ${S.sortBy !== "time" ? "on" : ""}" onclick="S.sortBy='value';save();render()">Best value first</button><button class="btn sm ${S.sortBy === "time" ? "on" : ""}" onclick="S.sortBy='time';save();render()">Most time saved first</button></span></div>` + (c.length ? `<table class="reg"><tr><th>Rank</th><th>Phase</th><th>Countermeasure</th><th style="width:200px">Workdays saved</th><th>Effort / cost</th><th>Decision</th></tr>
+ ${c.map( ({i}, k) => `<tr><td><div class="rank">${k + 1}</div></td><td>${esc(i.phase)}</td><td><b>${esc(i.cmTitle)}</b><div class="note">${esc(i.step)}</div></td>
+ <td><div style="display:flex;align-items:center;gap:8px"><div class="sbar" style="width:${Math.round(i.cmDays / mx * 120)}px"></div><b>${i.cmDays} d</b></div></td><td><span class="eff">${EN[i.cmEffort]}</span></td>
+ <td><div class="seg" style="min-width:230px"><button class="btn sm ${i.decision === "go" ? "on" : ""}" onclick="dec('${i.id}','go')">Go ahead</button><button class="btn sm" onclick="dec('${i.id}','no')">Don't go ahead</button></div></td></tr>`).join("")}</table>` : '<div class="empty">No countermeasures to rank yet. Add a title, workdays saved and effort in step 2.</div>') + (off.length ? `<h2 class="sec">Set aside as not worth it (${off.length})</h2><table class="reg">${off.map(i => `<tr><td>${esc(i.phase)}</td><td>${esc(i.cmTitle || i.step || i.description.slice(0, 60))}</td><td style="width:100px"><button class="btn sm" onclick="dec('${i.id}','')">Restore</button></td></tr>`).join("")}</table>` : "");
+            }
+            function dec(id, v) {
+                const it = S.items.find(i => i.id === id);
+                it.decision = (it.decision === v && v !== "") ? "" : v;
+                save();
+                render()
+            }
+            function scenario() {
+                const rows = S.phases.map(p => {
+                    const red = Math.min(S.items.filter(i => i.phase === p.name && i.decision === "go" && i.cmDays != null).reduce( (a, i) => a + i.cmDays, 0), wdOrNull(p.start, p.end) || 0);
+                    return {
+                        name: p.name,
+                        p,
+                        start: p.start,
+                        end: p.end,
+                        gs: p.start,
+                        ge: p.end,
+                        red,
+                        parallel: p.parallel,
+                        pre: p.pre,
+                        valid: pd(p.start) != null && pd(p.end) != null && pd(p.end) >= pd(p.start)
+                    }
+                }
+                );
+                const arr = pd(S.arrival);
+                let prev = null;
+                const shift = {};
+                rows.forEach(r => {
+                    if (!r.valid)
+                        return;
+                    const o0 = pd(r.gs)
+                      , o1 = pd(r.ge);
+                    if (r.pre) {
+                        r.start = r.gs;
+                        r.end = fd(r.red ? stepBack(o1, r.red) : o1);
+                        if (pd(r.end) < o0)
+                            r.end = r.gs;
+                        shift[r.name] = 0;
+                        return
+                    }
+                    if (r.parallel)
+                        return;
+                    let ns = o0;
+                    if (prev) {
+                        ns = Math.max(arr, pd(prev.end) + (o0 - pd(prev.ge)))
+                    }
+                    let ne = o1 + (ns - o0);
+                    if (r.red)
+                        ne = stepBack(ne, r.red);
+                    if (ne < ns)
+                        ne = ns;
+                    r.start = fd(ns);
+                    r.end = fd(ne);
+                    shift[r.name] = ns - o0;
+                    prev = r
+                }
+                );
+                rows.forEach(r => {
+                    if (!r.valid || !r.parallel)
+                        return;
+                    const o0 = pd(r.gs)
+                      , o1 = pd(r.ge);
+                    let best = null
+                      , bo = -1;
+                    rows.forEach(q => {
+                        if (q === r || !q.valid || q.parallel || q.pre)
+                            return;
+                        const ov = Math.min(o1, pd(q.ge)) - Math.max(o0, pd(q.gs));
+                        if (ov > bo) {
+                            bo = ov;
+                            best = q
+                        }
+                    }
+                    );
+                    const sh = best ? shift[best.name] : 0;
+                    let ne = o1 + sh;
+                    if (r.red)
+                        ne = stepBack(ne, r.red);
+                    const ns = o0 + sh;
+                    if (ne < ns)
+                        ne = ns;
+                    r.start = fd(ns);
+                    r.end = fd(ne)
+                }
+                );
+                rows.forEach(r => {
+                    r.changed = r.valid && (r.start !== r.gs || r.end !== r.ge);
+                    r.label = r.valid ? (wdOrNull(r.start, r.end) + " wd" + (r.red ? " · -" + r.red + " d" : "")) : ""
+                }
+                );
+                const post = rows.filter(r => r.valid && !r.pre);
+                const oEnd = post.length ? Math.max(...post.map(r => pd(r.ge))) : null
+                  , nEnd = post.length ? Math.max(...post.map(r => pd(r.end))) : null;
+                return {
+                    rows,
+                    oEnd,
+                    nEnd
+                };
+            }
+            function v4() {
+                const sc = scenario()
+                  , go_ = S.items.filter(i => i.decision === "go");
+                const saved = sc.oEnd == null ? 0 : (sc.nEnd < sc.oEnd ? workdays(sc.nEnd + DAY, sc.oEnd) : 0)
+                  , cd = sc.oEnd == null ? 0 : Math.round((sc.oEnd - sc.nEnd) / DAY);
+                const all = sc.rows.filter(r => r.valid).flatMap(r => [pd(r.gs), pd(r.ge), pd(r.start), pd(r.end)])
+                  , rng = all.length ? [Math.min(...all), Math.max(...all)] : null;
+                const mk = (rs, g) => rs.map(r => ({
+                    name: r.name,
+                    start: g ? r.gs : r.start,
+                    end: g ? r.ge : r.end,
+                    parallel: r.parallel,
+                    pre: r.pre,
+                    label: g ? (wdOrNull(r.gs, r.ge) == null ? "" : wdOrNull(r.gs, r.ge) + " wd") : r.label,
+                    changed: !g && r.changed,
+                    gs: r.gs,
+                    ge: r.ge
+                }));
+                $("view").innerHTML = `<div class="kpis"><div class="kpi"><small>Process end today</small><b>${sc.oEnd ? fd(sc.oEnd) : "-"}</b></div><div class="kpi"><small>Process end with countermeasures</small><b>${sc.nEnd ? fd(sc.nEnd) : "-"}</b></div><div class="kpi"><small>Lead time saved</small><b>${saved} workdays</b><small>${cd} calendar days</small></div><div class="kpi"><small>Countermeasures going ahead</small><b>${go_.length}</b></div></div>
+ <h2 class="sec">Current timeline</h2><div class="panelbox gantt">${ganttSVG(mk(sc.rows, true), true, false, rng)}</div>
+ <h2 class="sec">With selected countermeasures</h2><div class="panelbox gantt">${ganttSVG(mk(sc.rows, false), true, true, rng)}<div class="note">Green bars were shortened or moved earlier. Dashed outlines show the current position. Later phases keep their original gap after the previous phase and can't start before the PREIMP arrival. Parallel phases move with the phase they overlap most. Calendar shifts are estimates.</div></div>
+ <h2 class="sec">Countermeasure plan</h2>
+ ${go_.length ? `<table class="reg"><tr><th>Phase</th><th>Pain point</th><th>Countermeasure</th><th>Saves</th><th>Effort / cost</th></tr>${go_.map(i => `<tr><td>${esc(i.phase)}</td><td>${esc(i.step || i.description.slice(0, 60))}</td><td><b>${esc(i.cmTitle)}</b><div class="note">${esc(i.cmDesc)}</div></td><td>${i.cmDays} d</td><td>${EN[i.cmEffort]}</td></tr>`).join("")}</table>` : '<div class="empty">No countermeasures marked "Go ahead" yet. Decide in step 3.</div>'}`;
+            }
+            function exportJson() {
+                const b = new Blob([JSON.stringify({
+                    type: "cis-part2-state",
+                    version: 4,
+                    saved: new Date().toISOString(),
+                    state: S
+                }, null, 1)],{
+                    type: "application/json"
+                });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(b);
+                a.download = "CIS_Part2_" + new Date().toISOString().slice(0, 10) + ".json";
+                a.click()
+            }
+            $("file").onchange = e => {
+                readFile(e.target.files[0]);
+                e.target.value = ""
+            }
+            ;
+            $("arrival").onchange = e => {
+                if (S) {
+                    S.arrival = e.target.value;
+                    save();
+                    render()
+                }
+            }
+            ;
+            $("themeBtn").onclick = () => {
+                document.body.classList.toggle("dark");
+                try {
+                    localStorage.setItem("cisTheme", document.body.classList.contains("dark") ? "dark" : "light")
+                } catch (e) {}
+            }
+            ;
+            try {
+                if (localStorage.getItem("cisTheme") === "dark")
+                    document.body.classList.add("dark");
+                setAside(localStorage.getItem("cisAside") !== "0");
+                setNav(localStorage.getItem("cisNav") !== "0")
+            } catch (e) {}
+            render();
+        </script>
+    </body>
+</html>
