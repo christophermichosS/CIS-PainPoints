@@ -406,6 +406,22 @@
                 padding: 10px
             }
 
+            .dep {
+                margin-top: 8px;
+                padding: 6px 8px;
+                border: 1px solid var(--line);
+                border-radius: 6px;
+                background: var(--card);
+                font-size: 11.5px
+            }
+
+            .dep b {
+                display: block;
+                color: var(--muted);
+                font-size: 10.5px;
+                text-transform: uppercase
+            }
+
             label.f {
                 display: block;
                 font-weight: 600;
@@ -473,8 +489,8 @@
             .chk {
                 display: flex;
                 align-items: center;
-                gap: 5px;
-                font-size: 12px;
+                gap: 6px;
+                font-size: 13px;
                 margin-top: 5px
             }
 
@@ -768,6 +784,38 @@
                 color: var(--accent)
             }
 
+            .imp {
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-left: 5px solid var(--warn);
+                border-radius: 6px;
+                padding: 10px 14px;
+                margin: 8px 0
+            }
+
+            .imp b {
+                display: block
+            }
+
+            .imp .eftxt {
+                margin-top: 4px
+            }
+
+            .imp .lab {
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                color: var(--muted)
+            }
+
+            .tradeoff {
+                background: rgba(240,160,32,.1);
+                border-radius: 5px;
+                padding: 6px 8px;
+                margin-top: 6px;
+                font-size: 12.5px
+            }
+
             #navbtns {
                 position: sticky;
                 bottom: 0;
@@ -803,6 +851,10 @@
                 box-shadow: 0 10px 40px rgba(0,0,0,.4)
             }
 
+            .mbox.narrow {
+                width: min(520px,94vw)
+            }
+
             .mbox .mh {
                 display: flex;
                 align-items: center;
@@ -827,7 +879,7 @@
 
             .mbox .mb {
                 overflow: auto;
-                padding: 4px 16px 8px
+                padding: 8px 16px
             }
 
             .mbox .mf {
@@ -836,6 +888,28 @@
                 padding: 12px 16px;
                 border-top: 1px solid var(--line);
                 align-items: center
+            }
+
+            .opt {
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: var(--card);
+                padding: 10px 12px;
+                margin: 8px 0;
+                cursor: pointer
+            }
+
+            .opt.on {
+                border-color: var(--accent);
+                outline: 2px solid var(--accent)
+            }
+
+            .opt b {
+                display: block
+            }
+
+            .opt .refs {
+                margin: 8px 0 0 4px
             }
 
             .welcome {
@@ -917,6 +991,22 @@
             #toast.show {
                 opacity: 1
             }
+
+            @media print {
+                body {
+                    overflow: visible;
+                    display: block
+                }
+
+                header,.toolbar,nav,aside,#navbtns {
+                    display: none!important
+                }
+
+                #wrap {
+                    overflow: visible;
+                    background: #fff
+                }
+            }
         </style>
     </head>
     <body class="empty">
@@ -976,6 +1066,7 @@
         <div id="toast"></div>
         <script>
             const ORDER = ["Pre-CRA Data", "After CRA Data", "APIM Production (T1FF+)", "Prep for Income Processing", "Income Processing", "Imputation Part 1", "Post Income DVs", "Weights", "Final Steps"];
+            const PRE = ["Pre-CRA Data", "After CRA Data"];
             const ALIAS = {
                 "During Income Processing": "Income Processing"
             };
@@ -990,7 +1081,7 @@
                 "Weights": ["2027-02-15", "2027-02-26"],
                 "Final Steps": ["2027-03-01", "2027-05-03"]
             };
-            const STEPS = [["Phases & pain points", "Add times, dates, edit"], ["Countermeasures", "Propose a fix per pain point"], ["Prioritize", "Ranked by time saved and effort"], ["Before & after", "New timeline and plan"]];
+            const STEPS = [["Phases & pain points", "Add times, dates, edit"], ["Countermeasures", "Propose a fix per pain point"], ["Prioritize", "Ranked by time saved and effort"], ["Before & after", "New timeline, plan and trade-offs"]];
             const EW = {
                 S: 1,
                 M: 2,
@@ -1001,12 +1092,21 @@
                 M: "Medium",
                 L: "Large"
             };
+            const CMF = {
+                cmTitle: "",
+                cmDesc: "",
+                cmEffect: "",
+                cmDays: null,
+                cmEffort: "",
+                decision: ""
+            };
             let S = null
               , cur = null
               , sel = null
               , step = 0
               , onlyOpen = false
-              , pm = null;
+              , pm = null
+              , dm = null;
             const $ = id => document.getElementById(id);
             const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({
                 "&": "&amp;",
@@ -1023,6 +1123,7 @@
             ;
             const fd = t => new Date(t).toISOString().slice(0, 10);
             const DAY = 864e5;
+            const isPar = p => !!(p.dep && p.dep.mode === "with");
             function toast(m) {
                 const t = $("toast");
                 t.textContent = m;
@@ -1032,6 +1133,35 @@
             function isMile(it) {
                 const t = it.description || "";
                 return !it.timeVal && /(start|end|arrives|mid |early|week after|begin)/i.test(t) && t.length < 110 && !/concurrently/i.test(t)
+            }
+            function defaultDeps(phases) {
+                let last = null;
+                phases.forEach(p => {
+                    p.pre = PRE.includes(p.name);
+                    if (p.pre) {
+                        p.dep = {
+                            mode: "none",
+                            refs: []
+                        };
+                        return
+                    }
+                    if (p.name === "Imputation Part 1" && phases.some(q => q.name === "Income Processing")) {
+                        p.dep = {
+                            mode: "with",
+                            refs: ["Income Processing"]
+                        };
+                        return
+                    }
+                    p.dep = last ? {
+                        mode: "after",
+                        refs: [last.name]
+                    } : {
+                        mode: "none",
+                        refs: []
+                    };
+                    last = p
+                }
+                )
             }
             function build(raw) {
                 const seen = [];
@@ -1045,15 +1175,14 @@
                 const phases = names.map(n => ({
                     name: n,
                     start: (DEF[n] || ["", ""])[0],
-                    end: (DEF[n] || ["", ""])[1],
-                    parallel: n === "Imputation Part 1",
-                    pre: n === "Pre-CRA Data" || n === "After CRA Data"
+                    end: (DEF[n] || ["", ""])[1]
                 }));
+                defaultDeps(phases);
                 const items = []
                   , ms = [];
                 (raw.items || []).forEach( (it, i) => {
                     const ph = ALIAS[it.phase] || it.phase;
-                    const o = {
+                    const o = Object.assign({
                         id: it.id || ("n" + i),
                         phase: ph,
                         step: it.step === "Map pin" ? "" : (it.step || ""),
@@ -1065,13 +1194,8 @@
                         idea: it.idea || "",
                         days: (it.timeVal === "" || it.timeVal == null) ? null : Number(it.timeVal),
                         overlap: false,
-                        notes: "",
-                        cmTitle: "",
-                        cmDesc: "",
-                        cmDays: null,
-                        cmEffort: "",
-                        decision: ""
-                    };
+                        notes: ""
+                    }, CMF);
                     (isMile(it) ? ms : items).push(o)
                 }
                 );
@@ -1090,14 +1214,18 @@
                 S.milestones = S.milestones || [];
                 S.sortBy = S.sortBy || "value";
                 S.items.forEach(i => {
-                    if (i.cmTitle == null)
-                        Object.assign(i, {
-                            cmTitle: "",
-                            cmDesc: "",
-                            cmDays: null,
-                            cmEffort: "",
-                            decision: ""
-                        })
+                    Object.keys(CMF).forEach(k => {
+                        if (i[k] === undefined)
+                            i[k] = CMF[k]
+                    }
+                    )
+                }
+                );
+                if (S.phases.some(p => !p.dep))
+                    defaultDeps(S.phases);
+                S.phases.forEach(p => {
+                    p.pre = PRE.includes(p.name);
+                    delete p.parallel
                 }
                 )
             }
@@ -1111,6 +1239,7 @@
                 norm();
                 save();
                 pm = null;
+                dm = null;
                 go(0)
             }
             function save() {
@@ -1122,6 +1251,7 @@
                 if (confirm("Clear everything and return to the blank start screen? Export first if you want to keep your work.")) {
                     S = null;
                     pm = null;
+                    dm = null;
                     cur = null;
                     try {
                         localStorage.removeItem("cisPart2")
@@ -1190,7 +1320,7 @@
                     tot += st.its.length;
                     if (p.pre)
                         pre += st.eff;
-                    else if (!p.parallel)
+                    else if (!isPar(p))
                         post += st.eff
                 }
                 );
@@ -1233,7 +1363,7 @@
                 } catch (e) {}
                 $("view").innerHTML = `<div class="welcome"><h2>Lead-time reduction planning</h2><p>Import your facilitator workbook to build the phase overview, pain points and countermeasure plan.</p>
  <div class="drop" id="drop"><div class="big2">⇪</div><p style="margin:8px 0 14px">Drag your workbook (.json) here</p><button class="btn primary" onclick="document.getElementById('file').click()">Choose workbook file</button>${has ? '<div style="margin-top:12px"><button class="btn" onclick="resume()">Continue previous session</button></div>' : ""}</div>
- <div class="steps4"><div><b>1 · Phases</b>Dates, times, pain points</div><div><b>2 · Countermeasures</b>One fix per pain point</div><div><b>3 · Prioritize</b>Ranked by time and effort</div><div><b>4 · Before &amp; after</b>New timeline and plan</div></div></div>`;
+ <div class="steps4"><div><b>1 · Phases</b>Dates, times, pain points</div><div><b>2 · Countermeasures</b>Fix and trade-offs</div><div><b>3 · Prioritize</b>Ranked by time and effort</div><div><b>4 · Before &amp; after</b>New timeline and plan</div></div></div>`;
                 const d = $("drop");
                 ["dragenter", "dragover"].forEach(e => d.addEventListener(e, ev => {
                     ev.preventDefault();
@@ -1298,40 +1428,57 @@
                 save();
                 render()
             }
+            function depText(p) {
+                const d = p.dep || {
+                    mode: "none",
+                    refs: []
+                };
+                if (p.pre)
+                    return ["Before arrival", "Fixed (before the PREIMP arrival)"];
+                if (d.mode === "after")
+                    return ["Starts after", d.refs.length ? d.refs.join(" + ") : "(nothing selected)"];
+                if (d.mode === "with")
+                    return ["Runs at the same time as", d.refs[0] || "(nothing selected)"];
+                return ["Independent", "Keeps its own dates"]
+            }
             function phaseCards() {
                 let cards = []
                   , gateDone = false;
                 S.phases.forEach( (p, idx) => {
-                    const st = stats(p);
+                    const st = stats(p)
+                      , dt = depText(p);
                     if (!p.pre && !gateDone) {
                         gateDone = true;
                         cards.push('<div class="gate"><i>PREIMP arrival<br>' + esc(S.arrival) + '</i></div>')
                     }
                     cards.push(`<div class="ph ${p.pre ? "pre" : ""}" onclick="openPhase(${idx})"><div class="hd">${esc(p.name)}</div><div class="bd">
-  <label class="f">Start</label><input class="inp" type="date" value="${p.start}" onclick="event.stopPropagation()" onchange="setP(${idx},'start',this.value)">
+  <label class="f" style="margin-top:0">Start</label><input class="inp" type="date" value="${p.start}" onclick="event.stopPropagation()" onchange="setP(${idx},'start',this.value)">
   <label class="f">End</label><input class="inp" type="date" value="${p.end}" onclick="event.stopPropagation()" onchange="setP(${idx},'end',this.value)">
   <div class="sm" style="margin-top:8px">Workdays: <b>${st.wd == null ? "-" : st.wd}</b></div>
   <div class="big">${st.eff} d</div><div class="sm">potential reduction${st.capped ? ' <span class="red">(capped, raw ' + st.sum + ')</span>' : ""}</div>
   <div class="sm">${st.its.length} pain point(s)${st.miss ? ' · <span class="amber">' + st.miss + ' missing time</span>' : ""}</div>
-  <div onclick="event.stopPropagation()"><label class="chk"><input type="checkbox" ${p.parallel ? "checked" : ""} onchange="setP(${idx},'parallel',this.checked)"> Runs in parallel</label>
-  <label class="chk"><input type="checkbox" ${p.pre ? "checked" : ""} onchange="setP(${idx},'pre',this.checked)"> Before arrival</label></div></div></div>`)
+  <div class="dep" onclick="event.stopPropagation()"><b>${esc(dt[0])}</b>${esc(dt[1])}${p.pre ? "" : `<div style="margin-top:6px"><button class="btn sm" onclick="openDep(${idx})">Change</button></div>`}</div></div></div>`)
                 }
                 );
                 return cards.join("");
+            }
+            function rowsOf(list) {
+                return list.map(p => ({
+                    name: p.name,
+                    start: p.start,
+                    end: p.end,
+                    parallel: isPar(p),
+                    pre: p.pre,
+                    label: lbl(p),
+                    dep: p.dep
+                }))
             }
             function v1() {
                 if (cur != null)
                     return vDetail();
                 $("view").innerHTML = `<h2 class="sec">Phases · click a card to open its pain points</h2><div class="phases">${phaseCards()}</div>
- <h2 class="sec" style="margin-top:14px">Timeline</h2><div class="panelbox gantt">${ganttSVG(S.phases.map(p => ({
-                    name: p.name,
-                    start: p.start,
-                    end: p.end,
-                    parallel: p.parallel,
-                    pre: p.pre,
-                    label: lbl(p)
-                })), true)}</div>
- <div class="note">Driven by the phase cards. Grey dashed bars run in parallel. Red shading marks special exclusions. Prefilled dates are estimates, so edit them.</div>`;
+ <h2 class="sec" style="margin-top:14px">Timeline</h2><div class="panelbox gantt">${ganttSVG(rowsOf(S.phases), true)}</div>
+ <div class="note">Driven by the phase cards. Arrows show what each phase waits for (solid) or runs alongside (dotted). Red shading marks special exclusions. Prefilled dates are estimates, so edit them.</div>`;
                 $("aTitle").textContent = "Calendar settings";
                 if (!document.activeElement || !document.activeElement.closest || !document.activeElement.closest("#pane"))
                     overPane();
@@ -1360,8 +1507,9 @@
                   , W = 980
                   , RH = 30
                   , H = ph.length * RH + 40
-                  , x = t => L + (t - mn) / (mx - mn) * W;
-                let s = `<svg width="${L + W + 20}" height="${H}" font-size="12">`;
+                  , x = t => L + (t - mn) / (mx - mn) * W
+                  , yo = i => 30 + i * RH;
+                let s = `<svg width="${L + W + 20}" height="${H}" font-size="12"><defs><marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="var(--accent)"/></marker></defs>`;
                 let m = new Date(mn);
                 while (m.getTime() < mx) {
                     const t = m.getTime();
@@ -1384,7 +1532,7 @@
                     }
                     );
                 ph.forEach( (p, i) => {
-                    const y = 30 + i * RH
+                    const y = yo(i)
                       , a = x(pd(p.start))
                       , b = x(pd(p.end) + DAY);
                     const col = (p.parallel || p.pre) ? "var(--edge)" : (p.changed ? "var(--ok)" : "var(--phaseHead)");
@@ -1394,11 +1542,71 @@
                     s += `<rect x="${a}" y="${y}" width="${Math.max(b - a, 3)}" height="20" rx="4" fill="${col}" ${p.parallel ? 'opacity=".6" stroke="var(--edge)" stroke-dasharray="4 3"' : ""}/><text x="${a + 6}" y="${y + 14}" style="fill:#fff" font-size="11">${esc(p.label || "")}</text>`
                 }
                 );
+                ph.forEach( (p, i) => {
+                    const d = p.dep;
+                    if (!d || p.pre || d.mode === "none")
+                        return;
+                    (d.refs || []).forEach(rn => {
+                        const j = ph.findIndex(q => q.name === rn);
+                        if (j < 0 || j === i)
+                            return;
+                        const q = ph[j];
+                        const x1 = d.mode === "after" ? x(pd(q.end) + DAY) : x(pd(q.start))
+                          , y1 = yo(j) + 20
+                          , y2 = yo(i) + 10
+                          , x2 = x(pd(p.start));
+                        const ya = i > j ? y1 : yo(j);
+                        s += `<path d="M${x1},${ya} L${x1},${y2} L${x2 - 1},${y2}" fill="none" stroke="var(--accent)" stroke-width="1.6" ${d.mode === "with" ? 'stroke-dasharray="3 3"' : ""} marker-end="url(#ar)" opacity=".85"/>`
+                    }
+                    )
+                }
+                );
                 const ax = x(pd(S.arrival));
                 s += `<line x1="${ax}" x2="${ax}" y1="20" y2="${H}" stroke="var(--danger)" stroke-width="2" stroke-dasharray="5 4"/><text x="${ax + 4}" y="${H - 4}" style="fill:var(--danger)" font-size="11">PREIMP arrival</text></svg>`;
                 if (nod.length)
                     s += '<div class="note" style="padding:4px 8px">No dates yet: ' + nod.map(p => esc(p.name)).join(", ") + "</div>";
                 return s;
+            }
+            function openDep(i) {
+                dm = i;
+                depModal()
+            }
+            function closeDep() {
+                dm = null;
+                $("modal").innerHTML = "";
+                render()
+            }
+            function depMode(m) {
+                const p = S.phases[dm];
+                p.dep.mode = m;
+                if (m === "with" && p.dep.refs.length > 1)
+                    p.dep.refs = [p.dep.refs[0]];
+                if (m === "none")
+                    p.dep.refs = [];
+                save();
+                depModal()
+            }
+            function depRef(n, on) {
+                const p = S.phases[dm]
+                  , d = p.dep;
+                if (d.mode === "with") {
+                    d.refs = on ? [n] : []
+                } else {
+                    d.refs = on ? [...new Set([...d.refs, n])] : d.refs.filter(x => x !== n)
+                }
+                save();
+                depModal()
+            }
+            function depModal() {
+                const p = S.phases[dm]
+                  , d = p.dep
+                  , others = S.phases.filter( (q, k) => k !== dm && !q.pre);
+                const list = (type) => `<div class="refs">${others.map(q => `<label class="chk"><input type="${type}" name="dr" ${d.refs.includes(q.name) ? "checked" : ""} onclick="event.stopPropagation()" onchange="depRef('${esc(q.name).replace(/'/g, "&#39;")}',this.checked)"> ${esc(q.name)}</label>`).join("")}</div>`;
+                $("modal").innerHTML = `<div class="mbg" onclick="if(event.target===this)closeDep()"><div class="mbox narrow"><div class="mh"><h3>How does "${esc(p.name)}" connect?</h3><button class="x" onclick="closeDep()">&times;</button></div><div class="mb">
+ <div class="opt ${d.mode === "after" ? "on" : ""}" onclick="depMode('after')"><b>Starts after other phases finish</b><span class="note">It waits for every phase you tick. If those finish earlier, this one starts earlier.</span>${d.mode === "after" ? list("checkbox") : ""}</div>
+ <div class="opt ${d.mode === "with" ? "on" : ""}" onclick="depMode('with')"><b>Runs at the same time as another phase</b><span class="note">It moves with the phase you pick, and its time saved doesn't count twice.</span>${d.mode === "with" ? list("radio") : ""}</div>
+ <div class="opt ${d.mode === "none" ? "on" : ""}" onclick="depMode('none')"><b>Independent</b><span class="note">It keeps the dates you entered, whatever happens elsewhere.</span></div></div>
+ <div class="mf"><span class="spacer"></span><button class="btn primary" onclick="closeDep()">Done</button></div></div></div>`;
             }
             function overPane() {
                 $("pane").innerHTML = `<h3 style="margin-top:0">Holidays excluded from workdays</h3><input class="inp" id="hol" value="${esc(S.holidays.join(", "))}"><div class="note">YYYY-MM-DD, comma separated.</div>
@@ -1466,13 +1674,14 @@
             }
             function vDetail() {
                 const p = S.phases[cur]
-                  , st = stats(p);
+                  , st = stats(p)
+                  , dt = depText(p);
                 const its = [...st.its].sort( (a, b) => (a.days == null ? 0 : 1) - (b.days == null ? 0 : 1));
                 $("view").innerHTML = `<div class="row" style="align-items:center;margin-bottom:10px"><div style="flex:none"><button class="btn" onclick="closeDetail()">&larr; All phases</button></div><h2 style="margin:0 0 0 8px;font-size:18px;flex:1">${esc(p.name)}</h2><div style="flex:none"><button class="btn primary" onclick="addPP()">+ Add pain point</button></div></div>
- <div class="banner"><span class="pill">${p.pre ? "Before arrival: creates slack only" : p.parallel ? "Runs in parallel" : "After arrival: shortens end date"}</span><span>${esc(p.start || "no start")} to ${esc(p.end || "no end")}</span><span>Workdays: <b>${st.wd == null ? "-" : st.wd}</b></span><span>Pain-point days: <b>${st.sum}</b>${st.capped ? ' <span class="red">exceeds phase, capped at ' + st.wd + "</span>" : ""}</span><span>Missing time: <b class="${st.miss ? "amber" : ""}">${st.miss}</b></span></div>
+ <div class="banner"><span class="pill">${p.pre ? "Before arrival: creates slack only" : isPar(p) ? "Runs at the same time as " + esc((p.dep.refs || [])[0] || "-") : "After arrival: shortens end date"}</span><span>${esc(dt[0])}: <b>${esc(dt[1])}</b></span><span>${esc(p.start || "no start")} to ${esc(p.end || "no end")}</span><span>Workdays: <b>${st.wd == null ? "-" : st.wd}</b></span><span>Pain-point days: <b>${st.sum}</b>${st.capped ? ' <span class="red">exceeds phase, capped at ' + st.wd + "</span>" : ""}</span><span>Missing time: <b class="${st.miss ? "amber" : ""}">${st.miss}</b></span></div>
  <div class="note">Click a pain point to see it and propose a countermeasure.</div>
  <ul class="cards">${its.length ? its.map(i => `<li class="s${i.severity} ${i.id === sel ? "sel" : ""}" onclick="openPM('${i.id}')"><div class="tm ${i.days == null ? "miss" : ""}" onclick="event.stopPropagation()"><input class="inp" type="number" min="0" step="0.5" value="${i.days == null ? "" : i.days}" placeholder="add" onchange="qt('${i.id}',this.value)"><small>workdays</small></div>
- <div class="body"><div class="t">${esc(i.step || "(no step)")}</div><div>${esc(i.description.slice(0, 160))}</div><div><span class="tag">${esc(i.category)}</span><span class="tag">Severity ${i.severity}</span>${i.cmTitle ? '<span class="tag">Countermeasure: ' + esc(i.cmTitle) + (i.cmDays != null ? " (" + i.cmDays + " d)" : "") + "</span>" : '<span class="tag">No countermeasure yet</span>'}${i.decision === "no" ? '<span class="tag">Not worth it</span>' : ""}</div></div></li>`).join("") : '<div class="empty">No pain points in this phase.</div>'}</ul>`;
+ <div class="body"><div class="t">${esc(i.step || "(no step)")}</div><div>${esc(i.description.slice(0, 160))}</div><div><span class="tag">${esc(i.category)}</span><span class="tag">Severity ${i.severity}</span>${i.cmTitle ? '<span class="tag">Countermeasure: ' + esc(i.cmTitle) + (i.cmDays != null ? " (" + i.cmDays + " d)" : "") + "</span>" : '<span class="tag">No countermeasure yet</span>'}${i.cmEffect ? '<span class="tag">Has trade-off</span>' : ""}${i.decision === "no" ? '<span class="tag">Not worth it</span>' : ""}</div></div></li>`).join("") : '<div class="empty">No pain points in this phase.</div>'}</ul>`;
                 $("aTitle").textContent = "Edit pain point details";
                 const it = S.items.find(i => i.id === sel);
                 if (!it) {
@@ -1520,7 +1729,7 @@
             }
             function addPP() {
                 const id = "n" + Date.now();
-                S.items.push({
+                S.items.push(Object.assign({
                     id,
                     phase: S.phases[cur].name,
                     step: "",
@@ -1532,13 +1741,8 @@
                     idea: "",
                     days: null,
                     overlap: false,
-                    notes: "",
-                    cmTitle: "",
-                    cmDesc: "",
-                    cmDays: null,
-                    cmEffort: "",
-                    decision: ""
-                });
+                    notes: ""
+                }, CMF));
                 sel = id;
                 save();
                 render()
@@ -1584,6 +1788,7 @@
                 toast(it.decision === "no" ? "Marked not worth it" : "Restored");
                 closePM()
             }
+            const EFFECT_PH = "What gets worse or changes if we do this? (e.g. fewer data quality checks, lower microdata quality, more manual risk)";
             function modal() {
                 const i = S.items.find(x => x.id === pm);
                 if (!i) {
@@ -1596,7 +1801,8 @@
  <div class="k">Pain point</div>${esc(i.description) || "-"}<div class="k">Cause</div>${esc(i.cause) || "-"}<div class="k">Idea from workshop</div>${esc(i.idea) || "-"}
  <label class="f">Lead time of this pain point (workdays)</label><input class="inp" style="width:140px" type="number" min="0" step="0.5" value="${i.days == null ? "" : i.days}" onchange="mset('days',this.value===''?null:Number(this.value))"></div>
  <div class="frm"><label class="f" style="margin-top:0">Countermeasure proposal</label><input class="inp" placeholder="Title" value="${esc(i.cmTitle)}" onchange="mset('cmTitle',this.value)">
- <textarea class="inp" style="margin-top:6px;min-height:90px" placeholder="What would we do?" onchange="mset('cmDesc',this.value)">${esc(i.cmDesc)}</textarea>
+ <textarea class="inp" style="margin-top:6px;min-height:70px" placeholder="What would we do?" onchange="mset('cmDesc',this.value)">${esc(i.cmDesc)}</textarea>
+ <label class="f">Consequences / trade-offs</label><textarea class="inp" style="min-height:70px" placeholder="${EFFECT_PH}" onchange="mset('cmEffect',this.value)">${esc(i.cmEffect)}</textarea>
  <div class="row"><div><label class="f">Workdays we could save</label><input class="inp" type="number" min="0" step="0.5" value="${i.cmDays == null ? "" : i.cmDays}" onchange="mset('cmDays',this.value===''?null:Number(this.value));modal()">${over ? '<div class="note red">More than the pain point (' + i.days + ' d)</div>' : ""}</div>
  <div><label class="f">Effort / cost</label><div class="seg">${["S", "M", "L"].map(e => `<button class="btn ${i.cmEffort === e ? "on" : ""}" onclick="mbtn('cmEffort','${i.cmEffort === e ? "" : e}')">${EN[e]}</button>`).join("")}</div></div></div></div></div></div>
  <div class="mf"><button class="btn" onclick="editDetails()">Edit pain point details</button><span class="spacer"></span><button class="btn danger ${i.decision === "no" ? "on" : ""}" onclick="mdis()">${i.decision === "no" ? "Restore (was not worth it)" : "Not worth it"}</button><button class="btn primary" onclick="closePM()">Done</button></div></div></div>`;
@@ -1608,7 +1814,7 @@
                 })).filter(g => g.its.length);
                 const n = S.items.filter(i => i.cmTitle).length;
                 $("view").innerHTML = `<div class="banner"><b>${n} of ${S.items.length}</b> pain points have a countermeasure<label class="chk" style="margin:0 0 0 auto"><input type="checkbox" ${onlyOpen ? "checked" : ""} onchange="onlyOpen=this.checked;render()"> Only show pain points still to do</label></div>
- <div class="note">One countermeasure per pain point. Time saved is in workdays of lead time. Use "Not worth it" to set one aside quickly. You can restore it later.</div>` + (groups.length ? groups.map(g => `<div class="pgroup">${esc(g.p.name)} ${g.p.pre ? "(before arrival)" : ""}</div>` + g.its.map(i => cmCard(i)).join("")).join("") : '<div class="empty">Nothing to show.</div>');
+ <div class="note">One countermeasure per pain point. Time saved is in workdays of lead time. Record any consequences too, so the final plan shows what changes besides the time saved. Use "Not worth it" to set one aside quickly.</div>` + (groups.length ? groups.map(g => `<div class="pgroup">${esc(g.p.name)} ${g.p.pre ? "(before arrival)" : ""}</div>` + g.its.map(i => cmCard(i)).join("")).join("") : '<div class="empty">Nothing to show.</div>');
             }
             function cmCard(i) {
                 const over = i.cmDays != null && i.days != null && i.cmDays > i.days;
@@ -1617,6 +1823,7 @@
  <div class="k">Lead time of pain point</div><b>${i.days == null ? '<span class="amber">not set</span>' : i.days + " workdays"}</b></div>
  <div class="frm"><label class="f" style="margin-top:0">Countermeasure proposal</label><input class="inp" placeholder="Title" value="${esc(i.cmTitle)}" onchange="cmSet('${i.id}','cmTitle',this.value)">
  <textarea class="inp" style="margin-top:6px" placeholder="What would we do?" onchange="cmSet('${i.id}','cmDesc',this.value)">${esc(i.cmDesc)}</textarea>
+ <label class="f">Consequences / trade-offs</label><textarea class="inp" placeholder="${EFFECT_PH}" onchange="cmSet('${i.id}','cmEffect',this.value)">${esc(i.cmEffect)}</textarea>
  <div class="row"><div><label class="f">Workdays saved</label><input class="inp" type="number" min="0" step="0.5" value="${i.cmDays == null ? "" : i.cmDays}" onchange="cmSet('${i.id}','cmDays',this.value===''?null:Number(this.value))">${over ? '<div class="note red">More than the pain point (' + i.days + ' d)</div>' : ""}</div>
  <div><label class="f">Effort / cost</label><div class="seg">${["S", "M", "L"].map(e => `<button class="btn ${i.cmEffort === e ? "on" : ""}" onclick="cmSet('${i.id}','cmEffort','${i.cmEffort === e ? "" : e}')">${EN[e]}</button>`).join("")}</div></div></div>
  <div class="row" style="margin-top:10px"><button class="btn sm danger ${i.decision === "no" ? "on" : ""}" style="flex:none" onclick="cmSet('${i.id}','decision','${i.decision === "no" ? "" : "no"}')">${i.decision === "no" ? "Restore" : "Not worth it"}</button></div></div></div>`;
@@ -1642,7 +1849,7 @@
                   , off = S.items.filter(i => i.decision === "no");
                 $("view").innerHTML = `<div class="banner"><span>${S.sortBy === "time" ? "Ranked by <b>most time saved</b>, then lowest effort / cost." : "Ranked by <b>time saved for the effort / cost</b> (Small = 1, Medium = 2, Large = 3). A Small fix saving 4 days ranks above a Large fix saving 6."}</span>
  <span class="seg" style="margin-left:auto;min-width:300px"><button class="btn sm ${S.sortBy !== "time" ? "on" : ""}" onclick="S.sortBy='value';save();render()">Best value first</button><button class="btn sm ${S.sortBy === "time" ? "on" : ""}" onclick="S.sortBy='time';save();render()">Most time saved first</button></span></div>` + (c.length ? `<table class="reg"><tr><th>Rank</th><th>Phase</th><th>Countermeasure</th><th style="width:200px">Workdays saved</th><th>Effort / cost</th><th>Decision</th></tr>
- ${c.map( ({i}, k) => `<tr><td><div class="rank">${k + 1}</div></td><td>${esc(i.phase)}</td><td><b>${esc(i.cmTitle)}</b><div class="note">${esc(i.step)}</div></td>
+ ${c.map( ({i}, k) => `<tr><td><div class="rank">${k + 1}</div></td><td>${esc(i.phase)}</td><td><b>${esc(i.cmTitle)}</b><div class="note">${esc(i.step)}</div>${i.cmEffect ? '<div class="tradeoff"><b>Trade-off:</b> ' + esc(i.cmEffect) + "</div>" : ""}</td>
  <td><div style="display:flex;align-items:center;gap:8px"><div class="sbar" style="width:${Math.round(i.cmDays / mx * 120)}px"></div><b>${i.cmDays} d</b></div></td><td><span class="eff">${EN[i.cmEffort]}</span></td>
  <td><div class="seg" style="min-width:230px"><button class="btn sm ${i.decision === "go" ? "on" : ""}" onclick="dec('${i.id}','go')">Go ahead</button><button class="btn sm" onclick="dec('${i.id}','no')">Don't go ahead</button></div></td></tr>`).join("")}</table>` : '<div class="empty">No countermeasures to rank yet. Add a title, workdays saved and effort in step 2.</div>') + (off.length ? `<h2 class="sec">Set aside as not worth it (${off.length})</h2><table class="reg">${off.map(i => `<tr><td>${esc(i.phase)}</td><td>${esc(i.cmTitle || i.step || i.description.slice(0, 60))}</td><td style="width:100px"><button class="btn sm" onclick="dec('${i.id}','')">Restore</button></td></tr>`).join("")}</table>` : "");
             }
@@ -1653,83 +1860,57 @@
                 render()
             }
             function scenario() {
-                const rows = S.phases.map(p => {
-                    const red = Math.min(S.items.filter(i => i.phase === p.name && i.decision === "go" && i.cmDays != null).reduce( (a, i) => a + i.cmDays, 0), wdOrNull(p.start, p.end) || 0);
-                    return {
-                        name: p.name,
-                        p,
-                        start: p.start,
-                        end: p.end,
-                        gs: p.start,
-                        ge: p.end,
-                        red,
-                        parallel: p.parallel,
-                        pre: p.pre,
-                        valid: pd(p.start) != null && pd(p.end) != null && pd(p.end) >= pd(p.start)
-                    }
-                }
-                );
-                const arr = pd(S.arrival);
-                let prev = null;
-                const shift = {};
-                rows.forEach(r => {
-                    if (!r.valid)
+                const rows = S.phases.map(p => ({
+                    name: p.name,
+                    start: p.start,
+                    end: p.end,
+                    gs: p.start,
+                    ge: p.end,
+                    red: Math.min(S.items.filter(i => i.phase === p.name && i.decision === "go" && i.cmDays != null).reduce( (a, i) => a + i.cmDays, 0), wdOrNull(p.start, p.end) || 0),
+                    parallel: isPar(p),
+                    pre: p.pre,
+                    dep: p.dep,
+                    valid: pd(p.start) != null && pd(p.end) != null && pd(p.end) >= pd(p.start)
+                }));
+                const by = {};
+                rows.forEach(r => by[r.name] = r);
+                const arr = pd(S.arrival)
+                  , state = {};
+                function solve(r) {
+                    if (state[r.name] === 2 || state[r.name] === 1)
                         return;
-                    const o0 = pd(r.gs)
-                      , o1 = pd(r.ge);
-                    if (r.pre) {
-                        r.start = r.gs;
-                        r.end = fd(r.red ? stepBack(o1, r.red) : o1);
-                        if (pd(r.end) < o0)
-                            r.end = r.gs;
-                        shift[r.name] = 0;
-                        return
-                    }
-                    if (r.parallel)
-                        return;
-                    let ns = o0;
-                    if (prev) {
-                        ns = Math.max(arr, pd(prev.end) + (o0 - pd(prev.ge)))
-                    }
-                    let ne = o1 + (ns - o0);
-                    if (r.red)
-                        ne = stepBack(ne, r.red);
-                    if (ne < ns)
-                        ne = ns;
-                    r.start = fd(ns);
-                    r.end = fd(ne);
-                    shift[r.name] = ns - o0;
-                    prev = r
-                }
-                );
-                rows.forEach(r => {
-                    if (!r.valid || !r.parallel)
-                        return;
-                    const o0 = pd(r.gs)
-                      , o1 = pd(r.ge);
-                    let best = null
-                      , bo = -1;
-                    rows.forEach(q => {
-                        if (q === r || !q.valid || q.parallel || q.pre)
-                            return;
-                        const ov = Math.min(o1, pd(q.ge)) - Math.max(o0, pd(q.gs));
-                        if (ov > bo) {
-                            bo = ov;
-                            best = q
+                    state[r.name] = 1;
+                    if (r.valid) {
+                        const o0 = pd(r.gs)
+                          , o1 = pd(r.ge);
+                        let ns = o0
+                          , ne = o1;
+                        if (!r.pre && r.dep && r.dep.mode !== "none") {
+                            const refs = (r.dep.refs || []).map(n => by[n]).filter(q => q && q !== r && q.valid && !q.pre);
+                            refs.forEach(solve);
+                            const ok = refs.filter(q => q.ns != null);
+                            if (r.dep.mode === "after" && ok.length) {
+                                ns = Math.max(arr, ...ok.map(q => q.ne + (o0 - pd(q.ge))));
+                                ne = o1 + (ns - o0)
+                            } else if (r.dep.mode === "with" && ok.length) {
+                                const q = ok[0]
+                                  , sh = q.ns - pd(q.gs);
+                                ns = o0 + sh;
+                                ne = o1 + sh
+                            }
                         }
+                        if (r.red)
+                            ne = stepBack(ne, r.red);
+                        if (ne < ns)
+                            ne = ns;
+                        r.ns = ns;
+                        r.ne = ne;
+                        r.start = fd(ns);
+                        r.end = fd(ne)
                     }
-                    );
-                    const sh = best ? shift[best.name] : 0;
-                    let ne = o1 + sh;
-                    if (r.red)
-                        ne = stepBack(ne, r.red);
-                    const ns = o0 + sh;
-                    if (ne < ns)
-                        ne = ns;
-                    r.start = fd(ns);
-                    r.end = fd(ne)
+                    state[r.name] = 2
                 }
-                );
+                rows.forEach(solve);
                 rows.forEach(r => {
                     r.changed = r.valid && (r.start !== r.gs || r.end !== r.ge);
                     r.label = r.valid ? (wdOrNull(r.start, r.end) + " wd" + (r.red ? " · -" + r.red + " d" : "")) : ""
@@ -1757,21 +1938,34 @@
                     end: g ? r.ge : r.end,
                     parallel: r.parallel,
                     pre: r.pre,
+                    dep: r.dep,
                     label: g ? (wdOrNull(r.gs, r.ge) == null ? "" : wdOrNull(r.gs, r.ge) + " wd") : r.label,
                     changed: !g && r.changed,
                     gs: r.gs,
                     ge: r.ge
                 }));
+                const chg = sc.rows.filter(r => r.changed);
+                const withEff = go_.filter(i => i.cmEffect && i.cmEffect.trim())
+                  , noEff = go_.filter(i => !(i.cmEffect && i.cmEffect.trim()));
                 $("view").innerHTML = `<div class="kpis"><div class="kpi"><small>Process end today</small><b>${sc.oEnd ? fd(sc.oEnd) : "-"}</b></div><div class="kpi"><small>Process end with countermeasures</small><b>${sc.nEnd ? fd(sc.nEnd) : "-"}</b></div><div class="kpi"><small>Lead time saved</small><b>${saved} workdays</b><small>${cd} calendar days</small></div><div class="kpi"><small>Countermeasures going ahead</small><b>${go_.length}</b></div></div>
  <h2 class="sec">Current timeline</h2><div class="panelbox gantt">${ganttSVG(mk(sc.rows, true), true, false, rng)}</div>
- <h2 class="sec">With selected countermeasures</h2><div class="panelbox gantt">${ganttSVG(mk(sc.rows, false), true, true, rng)}<div class="note">Green bars were shortened or moved earlier. Dashed outlines show the current position. Later phases keep their original gap after the previous phase and can't start before the PREIMP arrival. Parallel phases move with the phase they overlap most. Calendar shifts are estimates.</div></div>
- <h2 class="sec">Countermeasure plan</h2>
- ${go_.length ? `<table class="reg"><tr><th>Phase</th><th>Pain point</th><th>Countermeasure</th><th>Saves</th><th>Effort / cost</th></tr>${go_.map(i => `<tr><td>${esc(i.phase)}</td><td>${esc(i.step || i.description.slice(0, 60))}</td><td><b>${esc(i.cmTitle)}</b><div class="note">${esc(i.cmDesc)}</div></td><td>${i.cmDays} d</td><td>${EN[i.cmEffort]}</td></tr>`).join("")}</table>` : '<div class="empty">No countermeasures marked "Go ahead" yet. Decide in step 3.</div>'}`;
+ <h2 class="sec">With selected countermeasures</h2><div class="panelbox gantt">${ganttSVG(mk(sc.rows, false), true, true, rng)}<div class="note">Green bars were shortened or moved earlier. Dashed outlines show the current position. Each phase follows the connections set on its card (arrows) and can't start before the PREIMP arrival. Calendar shifts are estimates.</div></div>
+ <h2 class="sec">What changes as a result</h2>
+ ${go_.length ? `<div class="note" style="margin-bottom:6px">Beyond the time saved, these are the consequences of the countermeasures going ahead.</div>
+ ${withEff.map(i => `<div class="imp"><b>${esc(i.cmTitle)} <span class="tag">${esc(i.phase)}</span><span class="tag">Saves ${i.cmDays} d</span><span class="tag">${EN[i.cmEffort]} effort / cost</span></b><div>${esc(i.cmDesc)}</div><div class="tradeoff"><span class="lab">Consequence</span><br>${esc(i.cmEffect)}</div></div>`).join("")}
+ ${noEff.length ? `<div class="imp" style="border-left-color:var(--edge)"><span class="lab">No consequences recorded for</span><div>${noEff.map(i => esc(i.cmTitle) + " (" + esc(i.phase) + ")").join("; ")}</div></div>` : ""}` : '<div class="empty">No countermeasures marked "Go ahead" yet. Decide in step 3.</div>'}
+ ${chg.length ? `<h2 class="sec" style="margin-top:14px">Timing changes</h2><table class="reg"><tr><th>Phase</th><th>Now</th><th>With countermeasures</th><th>Workdays</th></tr>${chg.map(r => {
+                    const a = wdOrNull(r.gs, r.ge)
+                      , b = wdOrNull(r.start, r.end);
+                    return `<tr><td>${esc(r.name)}</td><td>${esc(r.gs)} to ${esc(r.ge)}</td><td><b>${esc(r.start)} to ${esc(r.end)}</b></td><td>${a} → ${b}</td></tr>`
+                }
+                ).join("")}</table>` : ""}
+ ${go_.length ? `<h2 class="sec" style="margin-top:14px">Countermeasure plan</h2><table class="reg"><tr><th>Phase</th><th>Pain point</th><th>Countermeasure</th><th>Saves</th><th>Effort / cost</th></tr>${go_.map(i => `<tr><td>${esc(i.phase)}</td><td>${esc(i.step || i.description.slice(0, 60))}</td><td><b>${esc(i.cmTitle)}</b><div class="note">${esc(i.cmDesc)}</div></td><td>${i.cmDays} d</td><td>${EN[i.cmEffort]}</td></tr>`).join("")}</table>` : ""}`;
             }
             function exportJson() {
                 const b = new Blob([JSON.stringify({
                     type: "cis-part2-state",
-                    version: 4,
+                    version: 6,
                     saved: new Date().toISOString(),
                     state: S
                 }, null, 1)],{
