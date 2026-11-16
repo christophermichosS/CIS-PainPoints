@@ -406,6 +406,18 @@
                 padding: 10px
             }
 
+            .ph.add {
+                min-width: 110px;
+                width: 110px;
+                align-items: center;
+                justify-content: center;
+                border-style: dashed;
+                color: var(--muted);
+                font-weight: 600;
+                text-align: center;
+                padding: 10px
+            }
+
             .dep {
                 margin-top: 8px;
                 padding: 6px 8px;
@@ -512,6 +524,14 @@
 
             .gantt svg .mut {
                 fill: var(--muted)
+            }
+
+            .gantt svg g.bar {
+                cursor: help
+            }
+
+            .gantt svg g.bar:hover rect.b {
+                filter: brightness(1.25)
             }
 
             .cards {
@@ -797,10 +817,6 @@
                 display: block
             }
 
-            .imp .eftxt {
-                margin-top: 4px
-            }
-
             .imp .lab {
                 font-size: 11px;
                 font-weight: 600;
@@ -1065,7 +1081,7 @@
         <div id="modal"></div>
         <div id="toast"></div>
         <script>
-            const ORDER = ["Pre-CRA Data", "After CRA Data", "APIM Production (T1FF+)", "Prep for Income Processing", "Income Processing", "Imputation Part 1", "Post Income DVs", "Weights", "Final Steps"];
+            const ORDER = ["Pre-CRA Data", "After CRA Data", "APIM Production (T1FF+)", "Prep for Income Processing", "Income Processing", "Imputation Part 1", "Post Income DVs", "Weights", "Imputation Part 2", "Final Steps"];
             const PRE = ["Pre-CRA Data", "After CRA Data"];
             const ALIAS = {
                 "During Income Processing": "Income Processing"
@@ -1079,7 +1095,12 @@
                 "Imputation Part 1": ["2026-12-14", "2027-02-05"],
                 "Post Income DVs": ["2027-02-05", "2027-02-19"],
                 "Weights": ["2027-02-15", "2027-02-26"],
+                "Imputation Part 2": ["2027-03-01", "2027-03-12"],
                 "Final Steps": ["2027-03-01", "2027-05-03"]
+            };
+            const WITH = {
+                "Imputation Part 1": "Income Processing",
+                "Imputation Part 2": "Final Steps"
             };
             const STEPS = [["Phases & pain points", "Add times, dates, edit"], ["Countermeasures", "Propose a fix per pain point"], ["Prioritize", "Ranked by time saved and effort"], ["Before & after", "New timeline, plan and trade-offs"]];
             const EW = {
@@ -1145,10 +1166,11 @@
                         };
                         return
                     }
-                    if (p.name === "Imputation Part 1" && phases.some(q => q.name === "Income Processing")) {
+                    const w = WITH[p.name];
+                    if (w && phases.some(q => q.name === w)) {
                         p.dep = {
                             mode: "with",
-                            refs: ["Income Processing"]
+                            refs: [w]
                         };
                         return
                     }
@@ -1171,7 +1193,7 @@
                         seen.push(ph)
                 }
                 );
-                const names = [...ORDER.filter(n => seen.includes(n)), ...seen.filter(n => !ORDER.includes(n))];
+                const names = [...ORDER, ...seen.filter(n => !ORDER.includes(n))];
                 const phases = names.map(n => ({
                     name: n,
                     start: (DEF[n] || ["", ""])[0],
@@ -1259,6 +1281,32 @@
                     ;$("modal").innerHTML = "";
                     render()
                 }
+            }
+            function addPhase() {
+                const n = (prompt("Name of the new phase:") || "").trim();
+                if (!n)
+                    return;
+                if (S.phases.some(p => p.name === n)) {
+                    alert("A phase with that name already exists.");
+                    return
+                }
+                const last = [...S.phases].reverse().find(p => !p.pre && !isPar(p));
+                S.phases.push({
+                    name: n,
+                    start: "",
+                    end: "",
+                    pre: false,
+                    dep: last ? {
+                        mode: "after",
+                        refs: [last.name]
+                    } : {
+                        mode: "none",
+                        refs: []
+                    }
+                });
+                save();
+                render();
+                toast("Phase added")
             }
             function isWork(t, h, ex) {
                 const w = new Date(t).getUTCDay();
@@ -1460,7 +1508,20 @@
   <div class="dep" onclick="event.stopPropagation()"><b>${esc(dt[0])}</b>${esc(dt[1])}${p.pre ? "" : `<div style="margin-top:6px"><button class="btn sm" onclick="openDep(${idx})">Change</button></div>`}</div></div></div>`)
                 }
                 );
+                cards.push('<div class="ph add" onclick="addPhase()">+ Add phase</div>');
                 return cards.join("");
+            }
+            function tipOf(p) {
+                const st = stats(p);
+                let t = p.name + "\n" + (st.wd == null ? "No dates yet" : st.wd + " workdays");
+                t += st.eff ? "\nCould save up to " + st.eff + " workdays" : "\nNo time-saving estimate yet";
+                if (st.miss)
+                    t += "\n" + st.miss + " pain point(s) still missing a time";
+                if (p.pre)
+                    t += "\n(Before arrival: creates slack only, the end date doesn't move)";
+                else if (isPar(p))
+                    t += "\n(Runs alongside another phase: doesn't shorten the end date)";
+                return t
             }
             function rowsOf(list) {
                 return list.map(p => ({
@@ -1469,7 +1530,8 @@
                     end: p.end,
                     parallel: isPar(p),
                     pre: p.pre,
-                    label: lbl(p),
+                    label: (wdOrNull(p.start, p.end) == null ? "" : wdOrNull(p.start, p.end) + " wd"),
+                    tip: tipOf(p),
                     dep: p.dep
                 }))
             }
@@ -1478,14 +1540,10 @@
                     return vDetail();
                 $("view").innerHTML = `<h2 class="sec">Phases · click a card to open its pain points</h2><div class="phases">${phaseCards()}</div>
  <h2 class="sec" style="margin-top:14px">Timeline</h2><div class="panelbox gantt">${ganttSVG(rowsOf(S.phases), true)}</div>
- <div class="note">Driven by the phase cards. Arrows show what each phase waits for (solid) or runs alongside (dotted). Red shading marks special exclusions. Prefilled dates are estimates, so edit them.</div>`;
+ <div class="note">Each bar shows its workdays (wd). Hover a bar to see how many days could be saved. Thin lines show what each phase waits for (solid) or runs alongside (dotted). Red shading marks special exclusions. Prefilled dates are estimates, so edit them.</div>`;
                 $("aTitle").textContent = "Calendar settings";
                 if (!document.activeElement || !document.activeElement.closest || !document.activeElement.closest("#pane"))
                     overPane();
-            }
-            function lbl(p) {
-                const st = stats(p);
-                return (st.wd == null ? "" : st.wd + " wd") + (st.eff ? " · -" + st.eff + " d possible" : "")
             }
             function ganttSVG(rows, showEx, ghost, rng) {
                 const ok = r => pd(r.start) != null && pd(r.end) != null && pd(r.end) >= pd(r.start);
@@ -1505,11 +1563,18 @@
                 mx = Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth() + 1, 1);
                 const L = 190
                   , W = 980
-                  , RH = 30
-                  , H = ph.length * RH + 40
+                  , RH = 34
+                  , H = ph.length * RH + 44
                   , x = t => L + (t - mn) / (mx - mn) * W
-                  , yo = i => 30 + i * RH;
-                let s = `<svg width="${L + W + 20}" height="${H}" font-size="12"><defs><marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="var(--accent)"/></marker></defs>`;
+                  , yo = i => 32 + i * RH
+                  , BH = 22
+                  , TW = L + W + 30;
+                let s = `<svg width="${TW}" height="${H}" font-size="12"><defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--edge)"/></marker></defs>`;
+                ph.forEach( (p, i) => {
+                    if (i % 2 === 0)
+                        s += `<rect x="0" y="${yo(i) - 6}" width="${TW}" height="${RH}" fill="var(--surface)" opacity=".55"/>`
+                }
+                );
                 let m = new Date(mn);
                 while (m.getTime() < mx) {
                     const t = m.getTime();
@@ -1528,20 +1593,9 @@
                             return;
                         const a = x(Math.max(a0, mn))
                           , b = x(Math.min(b0, mx) + DAY);
-                        s += `<rect x="${a}" y="22" width="${Math.max(b - a, 3)}" height="${H - 22}" fill="var(--danger)" opacity=".16"/><text x="${a + 2}" y="${H - 4}" style="fill:var(--danger)" font-size="10">${esc(q.label || "Excluded")}</text>`
+                        s += `<rect x="${a}" y="22" width="${Math.max(b - a, 3)}" height="${H - 22}" fill="var(--danger)" opacity=".14"/><text x="${a + 2}" y="${H - 4}" style="fill:var(--danger)" font-size="10">${esc(q.label || "Excluded")}</text>`
                     }
                     );
-                ph.forEach( (p, i) => {
-                    const y = yo(i)
-                      , a = x(pd(p.start))
-                      , b = x(pd(p.end) + DAY);
-                    const col = (p.parallel || p.pre) ? "var(--edge)" : (p.changed ? "var(--ok)" : "var(--phaseHead)");
-                    s += `<text x="${L - 8}" y="${y + 14}" text-anchor="end">${esc(p.name)}</text>`;
-                    if (ghost)
-                        s += `<rect x="${x(pd(p.gs))}" y="${y - 2}" width="${Math.max(x(pd(p.ge) + DAY) - x(pd(p.gs)), 3)}" height="24" rx="4" fill="none" stroke="var(--edge)" stroke-dasharray="4 3"/>`;
-                    s += `<rect x="${a}" y="${y}" width="${Math.max(b - a, 3)}" height="20" rx="4" fill="${col}" ${p.parallel ? 'opacity=".6" stroke="var(--edge)" stroke-dasharray="4 3"' : ""}/><text x="${a + 6}" y="${y + 14}" style="fill:#fff" font-size="11">${esc(p.label || "")}</text>`
-                }
-                );
                 ph.forEach( (p, i) => {
                     const d = p.dep;
                     if (!d || p.pre || d.mode === "none")
@@ -1552,13 +1606,28 @@
                             return;
                         const q = ph[j];
                         const x1 = d.mode === "after" ? x(pd(q.end) + DAY) : x(pd(q.start))
-                          , y1 = yo(j) + 20
-                          , y2 = yo(i) + 10
-                          , x2 = x(pd(p.start));
-                        const ya = i > j ? y1 : yo(j);
-                        s += `<path d="M${x1},${ya} L${x1},${y2} L${x2 - 1},${y2}" fill="none" stroke="var(--accent)" stroke-width="1.6" ${d.mode === "with" ? 'stroke-dasharray="3 3"' : ""} marker-end="url(#ar)" opacity=".85"/>`
+                          , x2 = x(pd(p.start))
+                          , xv = Math.min(x1, x2) - 6;
+                        const ya = i > j ? yo(j) + BH : yo(j)
+                          , y2 = yo(i) + BH / 2;
+                        s += `<path d="M${x1},${ya} L${xv},${ya} L${xv},${y2} L${x2 - 2},${y2}" fill="none" stroke="var(--edge)" stroke-width="1.2" ${d.mode === "with" ? 'stroke-dasharray="2 3"' : ""} marker-end="url(#ar)" opacity=".6"/>`
                     }
                     )
+                }
+                );
+                ph.forEach( (p, i) => {
+                    const y = yo(i)
+                      , a = x(pd(p.start))
+                      , b = x(pd(p.end) + DAY)
+                      , w = Math.max(b - a, 3);
+                    const col = (p.parallel || p.pre) ? "var(--edge)" : (p.changed ? "var(--ok)" : "var(--phaseHead)");
+                    s += `<text x="${L - 8}" y="${y + 15}" text-anchor="end" font-weight="600">${esc(p.name)}</text>`;
+                    if (ghost)
+                        s += `<rect x="${x(pd(p.gs))}" y="${y - 2}" width="${Math.max(x(pd(p.ge) + DAY) - x(pd(p.gs)), 3)}" height="${BH + 4}" rx="4" fill="none" stroke="var(--edge)" stroke-dasharray="4 3"/>`;
+                    s += `<g class="bar"><title>${esc(p.tip || p.name)}</title><rect class="b" x="${a}" y="${y}" width="${w}" height="${BH}" rx="4" fill="${col}" ${p.parallel ? 'opacity=".7" stroke="var(--edge)" stroke-dasharray="4 3"' : ""}/>`;
+                    if (p.label && w >= 36)
+                        s += `<text x="${a + w / 2}" y="${y + 15}" text-anchor="middle" font-size="12" font-weight="600" style="fill:#fff;pointer-events:none">${esc(p.label)}</text>`;
+                    s += `</g>`
                 }
                 );
                 const ax = x(pd(S.arrival));
@@ -1913,7 +1982,10 @@
                 rows.forEach(solve);
                 rows.forEach(r => {
                     r.changed = r.valid && (r.start !== r.gs || r.end !== r.ge);
-                    r.label = r.valid ? (wdOrNull(r.start, r.end) + " wd" + (r.red ? " · -" + r.red + " d" : "")) : ""
+                    const a = wdOrNull(r.gs, r.ge)
+                      , b = wdOrNull(r.start, r.end);
+                    r.label = r.valid ? b + " wd" : "";
+                    r.tip = r.valid ? (r.name + "\nNow: " + a + " workdays (" + r.gs + " to " + r.ge + ")\nWith countermeasures: " + b + " workdays (" + r.start + " to " + r.end + ")" + (r.red ? "\nSaved by countermeasures: " + r.red + " workdays" : "\nNo countermeasure going ahead here")) : r.name
                 }
                 );
                 const post = rows.filter(r => r.valid && !r.pre);
@@ -1932,24 +2004,29 @@
                   , cd = sc.oEnd == null ? 0 : Math.round((sc.oEnd - sc.nEnd) / DAY);
                 const all = sc.rows.filter(r => r.valid).flatMap(r => [pd(r.gs), pd(r.ge), pd(r.start), pd(r.end)])
                   , rng = all.length ? [Math.min(...all), Math.max(...all)] : null;
-                const mk = (rs, g) => rs.map(r => ({
-                    name: r.name,
-                    start: g ? r.gs : r.start,
-                    end: g ? r.ge : r.end,
-                    parallel: r.parallel,
-                    pre: r.pre,
-                    dep: r.dep,
-                    label: g ? (wdOrNull(r.gs, r.ge) == null ? "" : wdOrNull(r.gs, r.ge) + " wd") : r.label,
-                    changed: !g && r.changed,
-                    gs: r.gs,
-                    ge: r.ge
-                }));
+                const mk = (rs, g) => rs.map(r => {
+                    const ow = wdOrNull(r.gs, r.ge);
+                    return {
+                        name: r.name,
+                        start: g ? r.gs : r.start,
+                        end: g ? r.ge : r.end,
+                        parallel: r.parallel,
+                        pre: r.pre,
+                        dep: r.dep,
+                        label: g ? (ow == null ? "" : ow + " wd") : r.label,
+                        tip: g ? (r.name + (ow == null ? "" : "\n" + ow + " workdays")) : r.tip,
+                        changed: !g && r.changed,
+                        gs: r.gs,
+                        ge: r.ge
+                    }
+                }
+                );
                 const chg = sc.rows.filter(r => r.changed);
                 const withEff = go_.filter(i => i.cmEffect && i.cmEffect.trim())
                   , noEff = go_.filter(i => !(i.cmEffect && i.cmEffect.trim()));
                 $("view").innerHTML = `<div class="kpis"><div class="kpi"><small>Process end today</small><b>${sc.oEnd ? fd(sc.oEnd) : "-"}</b></div><div class="kpi"><small>Process end with countermeasures</small><b>${sc.nEnd ? fd(sc.nEnd) : "-"}</b></div><div class="kpi"><small>Lead time saved</small><b>${saved} workdays</b><small>${cd} calendar days</small></div><div class="kpi"><small>Countermeasures going ahead</small><b>${go_.length}</b></div></div>
  <h2 class="sec">Current timeline</h2><div class="panelbox gantt">${ganttSVG(mk(sc.rows, true), true, false, rng)}</div>
- <h2 class="sec">With selected countermeasures</h2><div class="panelbox gantt">${ganttSVG(mk(sc.rows, false), true, true, rng)}<div class="note">Green bars were shortened or moved earlier. Dashed outlines show the current position. Each phase follows the connections set on its card (arrows) and can't start before the PREIMP arrival. Calendar shifts are estimates.</div></div>
+ <h2 class="sec">With selected countermeasures</h2><div class="panelbox gantt">${ganttSVG(mk(sc.rows, false), true, true, rng)}<div class="note">Hover a bar for details. Green bars were shortened or moved earlier. Dashed outlines show the current position. Each phase follows the connections set on its card and can't start before the PREIMP arrival. Calendar shifts are estimates.</div></div>
  <h2 class="sec">What changes as a result</h2>
  ${go_.length ? `<div class="note" style="margin-bottom:6px">Beyond the time saved, these are the consequences of the countermeasures going ahead.</div>
  ${withEff.map(i => `<div class="imp"><b>${esc(i.cmTitle)} <span class="tag">${esc(i.phase)}</span><span class="tag">Saves ${i.cmDays} d</span><span class="tag">${EN[i.cmEffort]} effort / cost</span></b><div>${esc(i.cmDesc)}</div><div class="tradeoff"><span class="lab">Consequence</span><br>${esc(i.cmEffect)}</div></div>`).join("")}
@@ -1965,7 +2042,7 @@
             function exportJson() {
                 const b = new Blob([JSON.stringify({
                     type: "cis-part2-state",
-                    version: 6,
+                    version: 9,
                     saved: new Date().toISOString(),
                     state: S
                 }, null, 1)],{
